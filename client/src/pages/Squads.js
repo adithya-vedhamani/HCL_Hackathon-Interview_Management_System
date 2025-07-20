@@ -366,9 +366,38 @@ const Squads = () => {
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">{candidate.name}</p>
-                            <p className="text-xs text-gray-500">{candidate.university} • {candidate.skills}</p>
+                          <div className="flex items-center space-x-3">
+                            <div className="flex-shrink-0 h-8 w-8">
+                              {candidate.photo_url ? (
+                                <img
+                                  className="h-8 w-8 rounded-full object-cover"
+                                  src={candidate.photo_url}
+                                  alt={candidate.name}
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                  }}
+                                />
+                              ) : candidate.selfie_path ? (
+                                <img
+                                  className="h-8 w-8 rounded-full object-cover"
+                                  src={`http://localhost:5001/uploads/${candidate.selfie_path}`}
+                                  alt={candidate.name}
+                                  onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                  }}
+                                />
+                              ) : null}
+                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center" style={{ display: candidate.photo_url || candidate.selfie_path ? 'none' : 'flex' }}>
+                                <User className="h-4 w-4 text-gray-400" />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{candidate.name}</p>
+                              <p className="text-xs text-gray-500">{candidate.university} • {candidate.degree}</p>
+                              <p className="text-xs text-gray-500">{candidate.skills}</p>
+                            </div>
                           </div>
                           {manualSquad.memberIds.includes(candidate.id) && (
                             <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
@@ -422,21 +451,37 @@ const Squads = () => {
                   {selectedSquad.members?.map((member) => (
                     <div key={member.id} className="border border-gray-200 rounded-lg p-4">
                       <div className="flex items-center space-x-3">
-                        {member.selfie_path ? (
-                          <img
-                            className="h-12 w-12 rounded-full object-cover"
-                            src={`http://localhost:5000/uploads/${member.selfie_path}`}
-                            alt={member.name}
-                          />
-                        ) : (
-                          <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                        <div className="flex-shrink-0 h-12 w-12">
+                          {member.photo_url ? (
+                            <img
+                              className="h-12 w-12 rounded-full object-cover"
+                              src={member.photo_url}
+                              alt={member.name}
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : member.selfie_path ? (
+                            <img
+                              className="h-12 w-12 rounded-full object-cover"
+                              src={`http://localhost:5001/uploads/${member.selfie_path}`}
+                              alt={member.name}
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center" style={{ display: member.photo_url || member.selfie_path ? 'none' : 'flex' }}>
                             <User className="h-6 w-6 text-gray-400" />
                           </div>
-                        )}
+                        </div>
                         <div className="flex-1">
                           <h4 className="text-sm font-medium text-gray-900">{member.name}</h4>
                           <p className="text-xs text-gray-500">{member.email}</p>
                           <p className="text-xs text-gray-500">{member.university}</p>
+                          <p className="text-xs text-gray-500">{member.degree}</p>
                           <p className="text-xs text-gray-500">{member.skills}</p>
                         </div>
                       </div>

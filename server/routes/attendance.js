@@ -54,7 +54,9 @@ router.post('/scan', (req, res) => {
                 name: candidate.name,
                 email: candidate.email,
                 university: candidate.university,
+                degree: candidate.degree,
                 skills: candidate.skills,
+                photo_url: candidate.photo_url,
                 selfie_path: candidate.selfie_path
               },
               attendance: {
@@ -72,7 +74,9 @@ router.post('/scan', (req, res) => {
               name: candidate.name,
               email: candidate.email,
               university: candidate.university,
+              degree: candidate.degree,
               skills: candidate.skills,
+              photo_url: candidate.photo_url,
               selfie_path: candidate.selfie_path
             },
             attendance: existingAttendance
@@ -96,7 +100,9 @@ router.post('/scan', (req, res) => {
               name: candidate.name,
               email: candidate.email,
               university: candidate.university,
+              degree: candidate.degree,
               skills: candidate.skills,
+              photo_url: candidate.photo_url,
               selfie_path: candidate.selfie_path
             },
             attendance: {
@@ -115,7 +121,7 @@ router.get('/candidate/:id', (req, res) => {
   const { id } = req.params;
 
   db.all(`
-    SELECT a.*, c.name, c.email 
+    SELECT a.*, c.name, c.email, c.university, c.degree, c.skills, c.photo_url, c.selfie_path
     FROM attendance a 
     JOIN candidates c ON a.candidate_id = c.id 
     WHERE a.candidate_id = ? 
@@ -135,7 +141,7 @@ router.get('/', (req, res) => {
   const { date } = req.query;
 
   let query = `
-    SELECT a.*, c.name, c.email, c.university, c.skills, c.selfie_path
+    SELECT a.*, c.name, c.email, c.university, c.degree, c.skills, c.photo_url, c.selfie_path
     FROM attendance a 
     JOIN candidates c ON a.candidate_id = c.id 
   `;

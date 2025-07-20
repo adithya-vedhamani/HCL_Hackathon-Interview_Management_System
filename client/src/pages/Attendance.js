@@ -175,17 +175,30 @@ const Attendance = () => {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
-                        {record.selfie_path ? (
+                        {record.photo_url ? (
                           <img
                             className="h-10 w-10 rounded-full object-cover"
-                            src={`http://localhost:5000/uploads/${record.selfie_path}`}
+                            src={record.photo_url}
                             alt={record.name}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
                           />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                            <User className="h-5 w-5 text-gray-400" />
-                          </div>
-                        )}
+                        ) : record.selfie_path ? (
+                          <img
+                            className="h-10 w-10 rounded-full object-cover"
+                            src={`http://localhost:5001/uploads/${record.selfie_path}`}
+                            alt={record.name}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                              e.target.nextSibling.style.display = 'flex';
+                            }}
+                          />
+                        ) : null}
+                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center" style={{ display: record.photo_url || record.selfie_path ? 'none' : 'flex' }}>
+                          <User className="h-5 w-5 text-gray-400" />
+                        </div>
                       </div>
                       <div className="ml-4">
                         <div className="text-sm font-medium text-gray-900">
@@ -268,17 +281,30 @@ const Attendance = () => {
               
               <div className="space-y-4">
                 <div className="flex items-center space-x-4">
-                  {selectedRecord.selfie_path ? (
+                  {selectedRecord.photo_url ? (
                     <img
                       className="h-16 w-16 rounded-full object-cover"
-                      src={`http://localhost:5000/uploads/${selectedRecord.selfie_path}`}
+                      src={selectedRecord.photo_url}
                       alt={selectedRecord.name}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
                     />
-                  ) : (
-                    <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center">
-                      <User className="h-8 w-8 text-gray-400" />
-                    </div>
-                  )}
+                  ) : selectedRecord.selfie_path ? (
+                    <img
+                      className="h-16 w-16 rounded-full object-cover"
+                      src={`http://localhost:5001/uploads/${selectedRecord.selfie_path}`}
+                      alt={selectedRecord.name}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div className="h-16 w-16 rounded-full bg-gray-200 flex items-center justify-center" style={{ display: selectedRecord.photo_url || selectedRecord.selfie_path ? 'none' : 'flex' }}>
+                    <User className="h-8 w-8 text-gray-400" />
+                  </div>
                   <div>
                     <h4 className="text-xl font-bold text-gray-900">{selectedRecord.name}</h4>
                     <p className="text-gray-600">{selectedRecord.email}</p>
@@ -289,6 +315,10 @@ const Attendance = () => {
                   <div>
                     <label className="text-sm font-medium text-gray-500">University</label>
                     <p className="text-sm text-gray-900">{selectedRecord.university}</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Degree</label>
+                    <p className="text-sm text-gray-900">{selectedRecord.degree}</p>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Skills</label>
