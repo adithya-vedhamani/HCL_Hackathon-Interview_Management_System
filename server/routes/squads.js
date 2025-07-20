@@ -1,66 +1,283 @@
 const express = require('express');
-const Groq = require('groq-sdk');
+const natural = require('natural');
 const db = require('../database');
 
 const router = express.Router();
 
-// Initialize Groq (you'll need to set GROQ_API_KEY in .env)
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
-});
+// Initialize NLP tokenizer
+const tokenizer = new natural.WordTokenizer();
 
-// AI-powered squad formation
-const formSquadsWithAI = async (candidates, squadSize, formationType) => {
-  try {
-    const prompt = `
-    Given these candidates with their skills:
-    ${candidates.map(c => `${c.name} (ID: ${c.id}): ${c.skills}`).join('\n')}
-    
-    Form ${Math.ceil(candidates.length / squadSize)} squads with ${squadSize} members each.
-    Formation type: ${formationType}
-    
-    If formation type is "similar": Group people with similar skills together
-    If formation type is "diverse": Group people with different skills together
-    
-    IMPORTANT: Return ONLY a valid JSON array of arrays, where each inner array contains candidate IDs.
-    Example: [[1,2,3,4], [5,6,7,8]]
-    
-    Do not include any text before or after the JSON. Only return the JSON array.
-    `;
+// Skill categories and synonyms for better matching
+const skillCategories = {
+  'frontend': ['javascript', 'js', 'react', 'vue', 'angular', 'html', 'css', 'typescript', 'sass', 'less', 'bootstrap', 'tailwind', 'jquery', 'dom', 'ajax', 'fetch', 'axios'],
+  'backend': ['node.js', 'nodejs', 'python', 'django', 'flask', 'express', 'java', 'spring', 'php', 'laravel', 'c#', '.net', 'asp.net', 'ruby', 'rails', 'go', 'golang', 'rust'],
+  'database': ['sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'sqlite', 'oracle', 'sql server', 'nosql', 'firebase', 'supabase', 'dynamodb'],
+  'devops': ['docker', 'kubernetes', 'aws', 'azure', 'gcp', 'ci/cd', 'jenkins', 'gitlab', 'github actions', 'terraform', 'ansible', 'nginx', 'apache'],
+  'mobile': ['react native', 'flutter', 'ios', 'swift', 'android', 'kotlin', 'java', 'xamarin', 'ionic', 'cordova'],
+  'ai_ml': ['machine learning', 'ml', 'artificial intelligence', 'ai', 'tensorflow', 'pytorch', 'scikit-learn', 'pandas', 'numpy', 'opencv', 'nlp', 'natural language processing', 'deep learning', 'neural networks'],
+  'data_science': ['data science', 'data analysis', 'statistics', 'r', 'matlab', 'jupyter', 'tableau', 'power bi', 'excel', 'spss', 'sas'],
+  'design': ['ui/ux', 'ui', 'ux', 'figma', 'adobe', 'photoshop', 'illustrator', 'sketch', 'invision', 'prototyping', 'wireframing', 'user research', 'usability testing'],
+  'blockchain': ['blockchain', 'ethereum', 'bitcoin', 'solidity', 'web3', 'smart contracts', 'defi', 'nft', 'cryptocurrency'],
+  'cybersecurity': ['security', 'cybersecurity', 'penetration testing', 'ethical hacking', 'owasp', 'encryption', 'authentication', 'authorization', 'ssl', 'tls']
+};
 
-    const completion = await groq.chat.completions.create({
-      model: "llama3-8b-8192",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.7,
+// Skill similarity mapping
+const skillSynonyms = {
+  'js': 'javascript',
+  'nodejs': 'node.js',
+  'reactjs': 'react',
+  'vuejs': 'vue',
+  'angularjs': 'angular',
+  'ml': 'machine learning',
+  'ai': 'artificial intelligence',
+  'ui': 'ui/ux',
+  'ux': 'ui/ux',
+  'ui/ux design': 'ui/ux',
+  'data analysis': 'data science',
+  'statistical analysis': 'data science',
+  'web development': 'frontend',
+  'full stack': 'fullstack',
+  'full-stack': 'fullstack',
+  'fullstack development': 'fullstack'
+};
+
+// NLP-enhanced skill processing
+const processSkillsWithNLP = (skillsString) => {
+  if (!skillsString) return [];
+  
+  // Tokenize and clean skills
+  const tokens = tokenizer.tokenize(skillsString.toLowerCase());
+  const cleanedSkills = tokens.filter(token => token.length > 1);
+  
+  // Normalize skills using synonyms
+  const normalizedSkills = cleanedSkills.map(skill => {
+    return skillSynonyms[skill] || skill;
+  });
+  
+  // Categorize skills
+  const categorizedSkills = {};
+  normalizedSkills.forEach(skill => {
+    for (const [category, categorySkills] of Object.entries(skillCategories)) {
+      if (categorySkills.includes(skill)) {
+        if (!categorizedSkills[category]) {
+          categorizedSkills[category] = [];
+        }
+        categorizedSkills[category].push(skill);
+      }
+    }
+  });
+  
+  const result = {
+    raw: normalizedSkills,
+    categorized: categorizedSkills,
+    categories: Object.keys(categorizedSkills)
+  };
+  
+  console.log(`NLP Processing: "${skillsString}" →`, result);
+  return result;
+};
+
+// Calculate skill similarity between two candidates
+const calculateSkillSimilarity = (skills1, skills2) => {
+  const set1 = new Set(skills1.raw);
+  const set2 = new Set(skills2.raw);
+  
+  const intersection = new Set([...set1].filter(x => set2.has(x)));
+  const union = new Set([...set1, ...set2]);
+  
+  return intersection.size / union.size; // Jaccard similarity
+};
+
+// Calculate skill diversity score
+const calculateDiversityScore = (candidateSkills, allSkills) => {
+  const skillFrequency = {};
+  
+  // Count frequency of each skill across all candidates
+  allSkills.forEach(skills => {
+    skills.raw.forEach(skill => {
+      skillFrequency[skill] = (skillFrequency[skill] || 0) + 1;
     });
+  });
+  
+  // Calculate rarity score (inverse frequency)
+  const rarityScore = candidateSkills.raw.reduce((score, skill) => {
+    return score + (1 / (skillFrequency[skill] || 1));
+  }, 0);
+  
+  // Bonus for having skills from different categories
+  const categoryBonus = candidateSkills.categories.length * 0.5;
+  
+  return rarityScore + categoryBonus;
+};
 
-    const response = completion.choices[0].message.content;
-    console.log('AI Response was:', response);
+// Smart squad formation algorithm with NLP
+const formSquadsWithAlgorithm = (candidates, squadSize, formationType) => {
+  try {
+    console.log(`Forming squads with ${formationType} skillset, size: ${squadSize}`);
     
-    // Try to extract JSON from the response
-    let jsonMatch = response.match(/\[\[.*\]\]/s);
-    if (!jsonMatch) {
-      // If no JSON array found, try to parse the entire response
-      jsonMatch = response;
+    // Process skills with NLP for each candidate
+    const candidatesWithNLP = candidates.map(candidate => ({
+      ...candidate,
+      skills: processSkillsWithNLP(candidate.skills)
+    }));
+    
+    let squads = [];
+    
+    if (formationType === 'similar') {
+      squads = formSimilarSquadsWithNLP(candidatesWithNLP, squadSize);
+    } else if (formationType === 'diverse') {
+      squads = formDiverseSquadsWithNLP(candidatesWithNLP, squadSize);
+    } else {
+      // Fallback to random
+      squads = formSquadsRandom(candidates, squadSize);
     }
     
-    const squads = JSON.parse(jsonMatch);
-    
-    // Validate the result
-    if (!Array.isArray(squads) || squads.length === 0) {
-      throw new Error('Invalid squad format returned by AI');
-    }
-    
-    // Validate and fix squads to ensure no duplicates
-    const validatedSquads = validateAndFixSquads(squads, candidates, squadSize);
-    console.log('Validated squads:', validatedSquads);
-    
-    return validatedSquads;
+    console.log('NLP Algorithm squads:', squads);
+    return squads;
   } catch (error) {
-    console.error('AI squad formation error:', error);
+    console.error('NLP Algorithm squad formation error:', error);
     // Fallback to random formation
     return formSquadsRandom(candidates, squadSize);
   }
+};
+
+// Form squads with similar skills using NLP
+const formSimilarSquadsWithNLP = (candidates, squadSize) => {
+  const squads = [];
+  const used = new Set();
+  
+  // Group candidates by skill categories
+  const categoryGroups = {};
+  
+  candidates.forEach(candidate => {
+    candidate.skills.categories.forEach(category => {
+      if (!categoryGroups[category]) {
+        categoryGroups[category] = [];
+      }
+      categoryGroups[category].push(candidate);
+    });
+  });
+  
+  // Sort categories by number of candidates (most popular first)
+  const sortedCategories = Object.keys(categoryGroups).sort((a, b) => 
+    categoryGroups[b].length - categoryGroups[a].length
+  );
+  
+  // Create squads from category groups
+  for (const category of sortedCategories) {
+    const candidatesInCategory = categoryGroups[category].filter(c => !used.has(c.id));
+    
+    if (candidatesInCategory.length >= squadSize) {
+      // Create full squad from this category
+      const squad = candidatesInCategory.slice(0, squadSize).map(c => c.id);
+      squads.push(squad);
+      squad.forEach(id => used.add(id));
+    } else if (candidatesInCategory.length > 0) {
+      // Add remaining candidates to incomplete squads or create new ones
+      candidatesInCategory.forEach(candidate => {
+        if (used.has(candidate.id)) return;
+        
+        // Find a squad that needs members
+        let added = false;
+        for (let i = 0; i < squads.length; i++) {
+          if (squads[i].length < squadSize) {
+            squads[i].push(candidate.id);
+            used.add(candidate.id);
+            added = true;
+            break;
+          }
+        }
+        
+        // If no squad found, create new one
+        if (!added) {
+          squads.push([candidate.id]);
+          used.add(candidate.id);
+        }
+      });
+    }
+  }
+  
+  // Add remaining candidates to incomplete squads
+  candidates.forEach(candidate => {
+    if (used.has(candidate.id)) return;
+    
+    let added = false;
+    for (let i = 0; i < squads.length; i++) {
+      if (squads[i].length < squadSize) {
+        squads[i].push(candidate.id);
+        used.add(candidate.id);
+        added = true;
+        break;
+      }
+    }
+    
+    if (!added) {
+      squads.push([candidate.id]);
+      used.add(candidate.id);
+    }
+  });
+  
+  return squads;
+};
+
+// Form squads with diverse skills using NLP
+const formDiverseSquadsWithNLP = (candidates, squadSize) => {
+  const squads = [];
+  const used = new Set();
+  
+  // Calculate diversity scores for all candidates
+  const allSkills = candidates.map(c => c.skills);
+  const candidatesWithDiversity = candidates.map(candidate => ({
+    ...candidate,
+    diversityScore: calculateDiversityScore(candidate.skills, allSkills)
+  })).sort((a, b) => b.diversityScore - a.diversityScore);
+  
+  // Create squads ensuring category diversity
+  for (let i = 0; i < candidatesWithDiversity.length; i += squadSize) {
+    const squad = [];
+    const squadCategories = new Set();
+    
+    // Add candidates to squad ensuring category diversity
+    for (let j = i; j < Math.min(i + squadSize, candidatesWithDiversity.length); j++) {
+      const candidate = candidatesWithDiversity[j];
+      if (used.has(candidate.id)) continue;
+      
+      // Check if this candidate adds category diversity to the squad
+      const hasNewCategories = candidate.skills.categories.some(category => !squadCategories.has(category));
+      
+      if (hasNewCategories || squad.length === 0) {
+        squad.push(candidate.id);
+        used.add(candidate.id);
+        candidate.skills.categories.forEach(category => squadCategories.add(category));
+      }
+    }
+    
+    if (squad.length > 0) {
+      squads.push(squad);
+    }
+  }
+  
+  // Add remaining candidates
+  candidates.forEach(candidate => {
+    if (used.has(candidate.id)) return;
+    
+    let added = false;
+    for (let i = 0; i < squads.length; i++) {
+      if (squads[i].length < squadSize) {
+        squads[i].push(candidate.id);
+        used.add(candidate.id);
+        added = true;
+        break;
+      }
+    }
+    
+    if (!added) {
+      squads.push([candidate.id]);
+      used.add(candidate.id);
+    }
+  });
+  
+  return squads;
 };
 
 // Validate and fix squad formation to ensure no duplicates
@@ -135,13 +352,7 @@ router.post('/create-with-ai', async (req, res) => {
         });
       }
 
-      let squads;
-      
-      if (process.env.GROQ_API_KEY) {
-        squads = await formSquadsWithAI(candidates, squadSize, formationType);
-      } else {
-        squads = formSquadsRandom(candidates, squadSize);
-      }
+      let squads = formSquadsWithAlgorithm(candidates, squadSize, formationType);
       
       // Ensure no duplicates in final squads
       squads = validateAndFixSquads(squads, candidates, squadSize);

@@ -59,14 +59,14 @@ const Squads = () => {
     }
   };
 
-  const handleAICreation = async () => {
+  const handleSmartCreation = async () => {
     try {
       const response = await squadsAPI.createWithAI(aiSettings);
       toast.success(`Successfully created ${response.data.squads.length} squads`);
       setShowAIModal(false);
       loadData();
     } catch (error) {
-      console.error('Error creating squads with AI:', error);
+      console.error('Error creating squads with smart algorithm:', error);
       toast.error(error.response?.data?.error || 'Failed to create squads');
     }
   };
@@ -146,7 +146,7 @@ const Squads = () => {
             className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center"
           >
             <Brain className="h-4 w-4 mr-2" />
-            AI Formation
+            Smart Formation
           </button>
           <button
             onClick={() => setShowManualModal(true)}
@@ -252,7 +252,7 @@ const Squads = () => {
           <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
             <div className="mt-3">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">AI Squad Formation</h3>
+                <h3 className="text-lg font-medium text-gray-900">Smart Squad Formation</h3>
                 <button
                   onClick={() => setShowAIModal(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -297,7 +297,7 @@ const Squads = () => {
                   <div className="flex items-center">
                     <Brain className="h-5 w-5 text-blue-600 mr-2" />
                     <p className="text-sm text-blue-800">
-                      AI will create {Math.ceil(availableCandidates.length / aiSettings.squadSize)} squads with {aiSettings.formationType} skills.
+                      Smart algorithm will create {Math.ceil(availableCandidates.length / aiSettings.squadSize)} squads with {aiSettings.formationType} skills.
                     </p>
                   </div>
                 </div>
@@ -311,7 +311,7 @@ const Squads = () => {
                   Cancel
                 </button>
                 <button
-                  onClick={handleAICreation}
+                  onClick={handleSmartCreation}
                   className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700"
                 >
                   Create Squads

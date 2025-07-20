@@ -71,63 +71,65 @@ const Login = () => {
   return (
     <div className="min-h-screen flex">
       {/* Left Side - HCLTech Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-purple-900 via-purple-800 to-blue-600 relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-purple-900 via-purple-800 to-blue-600 relative overflow-hidden flex items-center justify-center">
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full"></div>
-          <div className="absolute top-40 right-20 w-24 h-24 bg-white rounded-full"></div>
-          <div className="absolute bottom-20 left-20 w-16 h-16 bg-white rounded-full"></div>
-          <div className="absolute bottom-40 right-10 w-20 h-20 bg-white rounded-full"></div>
+          <div className="absolute top-10 left-10 w-32 h-32 bg-white rounded-full animate-pulse"></div>
+          <div className="absolute top-40 right-20 w-24 h-24 bg-white rounded-full animate-pulse" style={{animationDelay: '1s'}}></div>
+          <div className="absolute bottom-20 left-20 w-16 h-16 bg-white rounded-full animate-pulse" style={{animationDelay: '2s'}}></div>
+          <div className="absolute bottom-40 right-10 w-20 h-20 bg-white rounded-full animate-pulse" style={{animationDelay: '0.5s'}}></div>
         </div>
         
         {/* Content */}
-        <div className="relative z-10 flex flex-col justify-center items-center text-white px-12">
-          {/* Logo */}
-          <div className="mb-8">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center">
-                <Zap className="w-8 h-8 text-purple-600" />
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold tracking-tight">HCLTech</h1>
-                <p className="text-lg text-purple-200">Supercharging Progress™</p>
+        <div className="relative z-10 flex flex-col justify-center items-center text-white px-12 h-full">
+          <div className="max-w-lg w-full">
+            {/* Logo */}
+            <div className="text-center mb-12">
+              <div className="flex items-center justify-center space-x-4 mb-6">
+                <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center">
+                  <Zap className="w-8 h-8 text-purple-600" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold tracking-tight">HCLTech</h1>
+                  <p className="text-lg text-purple-200">Supercharging Progress™</p>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Main Message */}
-          <div className="text-center max-w-md">
-            <h2 className="text-3xl font-bold mb-4">
-              Hackathon Management System
-            </h2>
-            <p className="text-xl text-purple-200 mb-8">
-              Streamline your hackathon with AI-powered squad formation and QR attendance tracking
-            </p>
-          </div>
+            {/* Main Message */}
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold mb-4">
+                Hackathon Management System
+              </h2>
+              <p className="text-xl text-purple-200">
+                Streamlining hackathon with easy squad formation and QR code based attendance tracking
+              </p>
+            </div>
 
-          {/* Features */}
-          <div className="space-y-6 w-full max-w-sm">
-            <div className="flex items-center space-x-4 p-4 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
-              <QrCode className="w-6 h-6 text-purple-300" />
-              <div>
-                <h3 className="font-semibold text-white">QR Attendance</h3>
-                <p className="text-sm text-purple-200">Instant check-ins with QR codes</p>
+            {/* Features */}
+            <div className="space-y-6">
+              <div className="flex items-center space-x-4 p-4 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
+                <QrCode className="w-6 h-6 text-purple-300 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-white">QR Attendance</h3>
+                  <p className="text-sm text-purple-200">Instant check-ins with QR codes</p>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-4 p-4 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
-              <Users className="w-6 h-6 text-blue-300" />
-              <div>
-                <h3 className="font-semibold text-white">AI Squad Formation</h3>
-                <p className="text-sm text-purple-200">Smart team building with AI</p>
+              
+              <div className="flex items-center space-x-4 p-4 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
+                <Users className="w-6 h-6 text-blue-300 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-white">Squad Formation</h3>
+                  <p className="text-sm text-purple-200">Smart team building with diverse or similar skiilset</p>
+                </div>
               </div>
-            </div>
-            
-            <div className="flex items-center space-x-4 p-4 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
-              <Shield className="w-6 h-6 text-purple-300" />
-              <div>
-                <h3 className="font-semibold text-white">Real-time Analytics</h3>
-                <p className="text-sm text-purple-200">Comprehensive reporting dashboard</p>
+              
+              <div className="flex items-center space-x-4 p-4 bg-white bg-opacity-10 rounded-lg backdrop-blur-sm">
+                <Shield className="w-6 h-6 text-purple-300 flex-shrink-0" />
+                <div>
+                  <h3 className="font-semibold text-white">Real-time Analytics</h3>
+                  <p className="text-sm text-purple-200">Comprehensive reporting dashboard</p>
+                </div>
               </div>
             </div>
           </div>
@@ -136,7 +138,7 @@ const Login = () => {
 
       {/* Right Side - Login Form */}
       <div className="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 bg-gray-50">
-        <div className="max-w-md w-full space-y-8">
+        <div className="max-w-md w-full space-y-8 py-8">
           {/* Mobile Logo */}
           <div className="lg:hidden text-center">
             <div className="flex items-center justify-center space-x-3 mb-4">
