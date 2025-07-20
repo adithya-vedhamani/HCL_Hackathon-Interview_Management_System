@@ -45,3 +45,5 @@ echo "4. Start the client: npm run client"
 echo "5. Access the application at http://localhost:3000"
 echo ""
 echo "📚 For more information, see README.md" 
+
+#test
