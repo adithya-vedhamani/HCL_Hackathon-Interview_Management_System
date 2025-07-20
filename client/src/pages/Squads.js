@@ -1,22 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { toast } from 'react-hot-toast';
 import { squadsAPI } from '../services/api';
 import { 
   Users2, 
   Plus, 
   Brain, 
-  Settings, 
   Trash2,
   User,
   Code,
   Building,
-  Mail,
-  Phone,
   Eye,
-  Edit,
   X,
   Check,
-  Search
+  Search,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react';
 
 const Squads = () => {
@@ -38,6 +36,8 @@ const Squads = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
   
   // AI Formation settings
   const [aiSettings, setAiSettings] = useState({
@@ -50,6 +50,12 @@ const Squads = () => {
     name: '',
     memberIds: []
   });
+
+  // Dropdown states for modals
+  const [aiSquadSizeDropdownOpen, setAiSquadSizeDropdownOpen] = useState(false);
+  const [aiFormationTypeDropdownOpen, setAiFormationTypeDropdownOpen] = useState(false);
+  const aiSquadSizeDropdownRef = useRef(null);
+  const aiFormationTypeDropdownRef = useRef(null);
 
   useEffect(() => {
     loadData();
@@ -64,6 +70,26 @@ const Squads = () => {
   useEffect(() => {
     setPage(1);
   }, [searchTerm]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+      if (aiSquadSizeDropdownRef.current && !aiSquadSizeDropdownRef.current.contains(event.target)) {
+        setAiSquadSizeDropdownOpen(false);
+      }
+      if (aiFormationTypeDropdownRef.current && !aiFormationTypeDropdownRef.current.contains(event.target)) {
+        setAiFormationTypeDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const loadData = async () => {
     try {
@@ -160,6 +186,42 @@ const Squads = () => {
       setSortOrder('asc');
     }
     setPage(1);
+    setIsDropdownOpen(false);
+  };
+
+  const sortOptions = [
+    { value: 'created_at', label: 'Date Created', icon: '📅' },
+    { value: 'name', label: 'Squad Name', icon: '👥' },
+    { value: 'member_count', label: 'Member Count', icon: '👤' },
+    { value: 'id', label: 'Squad ID', icon: '🆔' }
+  ];
+
+  const getCurrentSortLabel = () => {
+    const option = sortOptions.find(opt => opt.value === sortBy);
+    return option ? `${option.icon} ${option.label}` : '📅 Date Created';
+  };
+
+  // AI Modal dropdown options
+  const squadSizeOptions = [
+    { value: 3, label: '3 members', icon: '👥' },
+    { value: 4, label: '4 members', icon: '👥' },
+    { value: 5, label: '5 members', icon: '👥' },
+    { value: 6, label: '6 members', icon: '👥' }
+  ];
+
+  const formationTypeOptions = [
+    { value: 'diverse', label: 'Diverse Skills', icon: '🎯' },
+    { value: 'similar', label: 'Similar Skills', icon: '🎯' }
+  ];
+
+  const getCurrentSquadSizeLabel = () => {
+    const option = squadSizeOptions.find(opt => opt.value === aiSettings.squadSize);
+    return option ? `${option.icon} ${option.label}` : '👥 4 members';
+  };
+
+  const getCurrentFormationTypeLabel = () => {
+    const option = formationTypeOptions.find(opt => opt.value === aiSettings.formationType);
+    return option ? `${option.icon} ${option.label}` : '🎯 Diverse Skills';
   };
 
   const handlePageSizeChange = (e) => {
@@ -244,7 +306,7 @@ const Squads = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="spinner"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
       </div>
     );
   }
@@ -252,111 +314,159 @@ const Squads = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Squads</h1>
-          <p className="text-gray-600">Manage hackathon teams</p>
-        </div>
-        <div className="mt-4 sm:mt-0 flex space-x-3">
-          <button
-            onClick={() => setShowAIModal(true)}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors flex items-center"
-          >
-            <Brain className="h-4 w-4 mr-2" />
-            Smart Formation
-          </button>
-          <button
-            onClick={() => setShowManualModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Manual Squad
-          </button>
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-xl p-6 text-white">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center space-x-4">
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-lg">
+              <Users2 className="h-6 w-6 text-purple-600" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold">Squads</h1>
+              <p className="text-purple-100">Manage hackathon teams</p>
+            </div>
+          </div>
+          <div className="mt-4 sm:mt-0 flex space-x-3">
+            <button
+              onClick={() => setShowAIModal(true)}
+              className="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-xl hover:bg-white/30 transition-all duration-300 border border-white/30 shadow-lg flex items-center"
+            >
+              <Brain className="h-4 w-4 mr-2" />
+              Smart Squad Formation
+            </button>
+            <button
+              onClick={() => setShowManualModal(true)}
+              className="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-xl hover:bg-white/30 transition-all duration-300 border border-white/30 shadow-lg flex items-center"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Manual Squad Formation
+            </button>
+          </div>
         </div>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center">
-            <Users2 className="h-8 w-8 text-blue-500" />
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+              <Users2 className="h-6 w-6 text-white" />
+            </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Total Squads</p>
-              <p className="text-2xl font-bold text-gray-900">{total}</p>
+              <p className="text-sm font-semibold text-gray-600">Total Squads</p>
+              <p className="text-3xl font-bold text-gray-900">{total}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center">
-            <User className="h-8 w-8 text-green-500" />
+            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+              <User className="h-6 w-6 text-white" />
+            </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">Available Candidates</p>
-              <p className="text-2xl font-bold text-gray-900">{availableCandidates.length}</p>
+              <p className="text-sm font-semibold text-gray-600">Available Candidates</p>
+              <p className="text-3xl font-bold text-gray-900">{availableCandidates.length}</p>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-lg shadow-sm p-6">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center">
-            <Brain className="h-8 w-8 text-purple-500" />
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+              <Brain className="h-6 w-6 text-white" />
+            </div>
             <div className="ml-4">
-              <p className="text-sm font-medium text-gray-600">AI Formation</p>
-              <p className="text-2xl font-bold text-gray-900">Ready</p>
+              <p className="text-sm font-semibold text-gray-600">AI Formation</p>
+              <p className="text-3xl font-bold text-gray-900">Ready</p>
             </div>
           </div>
         </div>
       </div>
 
       {/* Search and Filter */}
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100">
         <div className="p-6">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-6">
             {/* Search */}
             <div className="flex-1 max-w-md">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
                 <input
                   type="text"
                   placeholder="Search by squad name..."
                   value={searchTerm}
                   onChange={handleSearchChange}
-                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                  className="w-full pl-12 pr-12 py-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-lg"
                 />
                 {searchTerm && (
                   <button
                     onClick={handleSearchClear}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors"
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors"
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-5 w-5" />
                   </button>
                 )}
               </div>
             </div>
 
             {/* Sort Controls */}
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <span className="text-sm font-medium text-gray-700">Sort by:</span>
-                <select
-                  value={sortBy}
-                  onChange={(e) => handleSort(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                >
-                  <option value="name">Squad Name</option>
-                  <option value="created_at">Created Date</option>
-                  <option value="member_count">Member Count</option>
-                </select>
+            <div className="flex items-center space-x-6">
+              <div className="flex items-center space-x-3">
+                <span className="text-sm font-semibold text-gray-700">Sort by:</span>
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    className="flex items-center justify-between px-6 py-3 pr-4 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-medium transition-all duration-300 bg-white hover:border-purple-300 cursor-pointer shadow-sm min-w-[180px]"
+                  >
+                    <span>{getCurrentSortLabel()}</span>
+                    {isDropdownOpen ? (
+                      <ChevronUp className="h-5 w-5 text-purple-600 ml-2" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-purple-600 ml-2" />
+                    )}
+                  </button>
+                  
+                  {/* Custom Dropdown Menu */}
+                  {isDropdownOpen && (
+                    <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                      {sortOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => handleSort(option.value)}
+                          className={`w-full px-4 py-3 text-left text-sm font-medium transition-all duration-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 ${
+                            sortBy === option.value 
+                              ? 'bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-l-4 border-purple-500' 
+                              : 'text-gray-700 hover:text-purple-700'
+                          }`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <span className="text-lg">{option.icon}</span>
+                            <span>{option.label}</span>
+                            {sortBy === option.value && (
+                              <div className="ml-auto">
+                                <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
                 <button
                   onClick={() => handleSort(sortBy)}
-                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  className="p-3 text-gray-400 hover:text-purple-600 transition-all duration-300 bg-gray-50 hover:bg-purple-50 rounded-xl border border-gray-200 hover:border-purple-200 shadow-sm"
                   title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
                 >
-                  {sortOrder === 'asc' ? '↑' : '↓'}
+                  {sortOrder === 'asc' ? (
+                    <ChevronUp className="h-5 w-5" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5" />
+                  )}
                 </button>
               </div>
 
-              <div className="flex items-center space-x-2">
-                <Users2 className="h-4 w-4 text-gray-400" />
-                <span className="text-sm text-gray-600">
+              <div className="flex items-center space-x-3 bg-gradient-to-r from-purple-50 to-blue-50 px-4 py-3 rounded-xl border border-purple-100">
+                <Users2 className="h-5 w-5 text-purple-600" />
+                <span className="text-sm font-semibold text-gray-700">
                   {total} squads
                 </span>
               </div>
@@ -366,44 +476,49 @@ const Squads = () => {
       </div>
 
       {/* Squads List */}
-      <div className="bg-white rounded-lg shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-200">
+      <div className="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
+        <div className="px-6 py-4 border-b border-gray-100 bg-gradient-to-r from-purple-50 to-blue-50">
           <h2 className="text-lg font-semibold text-gray-900">All Squads</h2>
         </div>
-        <div className="divide-y divide-gray-200">
+        <div className="divide-y divide-gray-100">
           {squads.map((squad) => (
-            <div key={squad.id} className="p-6 hover:bg-gray-50">
+            <div key={squad.id} className="p-6 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 transition-all duration-300">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <div className="flex items-center space-x-3">
-                    <h3 className="text-lg font-medium text-gray-900">{squad.name}</h3>
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {squad.member_count || 0} members
-                    </span>
+                  <div className="flex items-center space-x-4">
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+                      <Users2 className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">{squad.name}</h3>
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border border-purple-200">
+                        {squad.member_count || 0} members
+                      </span>
+                    </div>
                   </div>
-                  <div className="mt-2">
+                  <div className="mt-3 ml-14">
                     <p className="text-sm text-gray-600">
-                      Members: {squad.member_names?.join(', ') || 'No members'}
+                      <span className="font-medium">Members:</span> {squad.member_names?.join(', ') || 'No members'}
                     </p>
                   </div>
-                  <div className="mt-1">
+                  <div className="mt-2 ml-14">
                     <p className="text-xs text-gray-500">
                       Created: {new Date(squad.created_at).toLocaleDateString()}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <button
                     onClick={() => viewSquad(squad)}
-                    className="text-blue-600 hover:text-blue-900 p-2"
+                    className="p-3 text-purple-600 hover:text-purple-900 hover:bg-purple-100 rounded-xl transition-all duration-300"
                   >
-                    <Eye className="h-4 w-4" />
+                    <Eye className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => handleDelete(squad.id)}
-                    className="text-red-600 hover:text-red-900 p-2"
+                    className="p-3 text-red-600 hover:text-red-900 hover:bg-red-100 rounded-xl transition-all duration-300"
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-5 w-5" />
                   </button>
                 </div>
               </div>
@@ -411,10 +526,12 @@ const Squads = () => {
           ))}
           
           {squads.length === 0 && (
-            <div className="text-center py-12">
-              <Users2 className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No squads yet</h3>
-              <p className="mt-1 text-sm text-gray-500">
+            <div className="text-center py-16">
+              <div className="w-20 h-20 bg-gradient-to-r from-purple-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Users2 className="h-10 w-10 text-purple-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No squads yet</h3>
+              <p className="text-gray-600">
                 Create your first squad using AI or manual formation.
               </p>
             </div>
@@ -424,40 +541,40 @@ const Squads = () => {
 
       {/* Modern Pagination Controls */}
       {!isLoading && total > 0 && (
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-          <div className="px-6 py-4">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100">
+          <div className="px-8 py-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
               {/* Page Info */}
-              <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm text-gray-700">Rows per page:</span>
+              <div className="flex items-center space-x-6">
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm font-semibold text-gray-700">Rows per page:</span>
                   <select 
                     value={pageSize} 
                     onChange={handlePageSizeChange} 
-                    className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                    className="px-4 py-2 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm font-medium transition-all duration-300"
                   >
                     {[5, 10, 20, 50].map(size => (
                       <option key={size} value={size}>{size}</option>
                     ))}
                   </select>
                 </div>
-                <div className="text-sm text-gray-600">
+                <div className="text-sm font-medium text-gray-600 bg-gradient-to-r from-purple-50 to-blue-50 px-4 py-2 rounded-xl border border-purple-100">
                   Showing {startItem} to {endItem} of {total} results
                 </div>
               </div>
 
               {/* Pagination Buttons */}
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-3">
                 <button 
                   onClick={handlePrevPage} 
                   disabled={page === 1} 
-                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                 >
                   Previous
                 </button>
                 
                 {/* Page Numbers */}
-                <div className="flex items-center space-x-1">
+                <div className="flex items-center space-x-2">
                   {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
                     let pageNum;
                     if (totalPages <= 5) {
@@ -474,10 +591,10 @@ const Squads = () => {
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        className={`px-4 py-2 text-sm font-semibold rounded-xl transition-all duration-300 ${
                           pageNum === page 
-                            ? 'bg-blue-600 text-white' 
-                            : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                            ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-lg' 
+                            : 'text-gray-600 bg-white border border-gray-200 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200'
                         }`}
                       >
                         {pageNum}
@@ -489,7 +606,7 @@ const Squads = () => {
                 <button 
                   onClick={handleNextPage} 
                   disabled={page === totalPages} 
-                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="px-4 py-2 text-sm font-semibold text-gray-600 bg-white border border-gray-200 rounded-xl hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
                 >
                   Next
                 </button>
@@ -501,73 +618,156 @@ const Squads = () => {
 
       {/* AI Formation Modal */}
       {showAIModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-8 border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white">
             <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Smart Squad Formation</h3>
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center">
+                    <Brain className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Smart Squad Formation</h3>
+                    <p className="text-sm text-gray-600">AI-powered team creation</p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowAIModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-300"
                 >
-                  <span className="sr-only">Close</span>
                   <X className="h-6 w-6" />
                 </button>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Squad Size
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    🎯 Squad Size
                   </label>
-                  <select
-                    value={aiSettings.squadSize}
-                    onChange={(e) => setAiSettings(prev => ({ ...prev, squadSize: parseInt(e.target.value) }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value={3}>3 members</option>
-                    <option value={4}>4 members</option>
-                    <option value={5}>5 members</option>
-                    <option value={6}>6 members</option>
-                  </select>
+                  <div className="relative" ref={aiSquadSizeDropdownRef}>
+                    <button
+                      onClick={() => setAiSquadSizeDropdownOpen(!aiSquadSizeDropdownOpen)}
+                      className="w-full flex items-center justify-between px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-lg bg-white hover:border-purple-300 cursor-pointer shadow-sm"
+                    >
+                      <span>{getCurrentSquadSizeLabel()}</span>
+                      {aiSquadSizeDropdownOpen ? (
+                        <ChevronUp className="h-5 w-5 text-purple-600 ml-2" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-purple-600 ml-2" />
+                      )}
+                    </button>
+                    
+                    {/* Custom Dropdown Menu */}
+                    {aiSquadSizeDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                        {squadSizeOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => {
+                              setAiSettings(prev => ({ ...prev, squadSize: option.value }));
+                              setAiSquadSizeDropdownOpen(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left text-sm font-medium transition-all duration-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 ${
+                              aiSettings.squadSize === option.value 
+                                ? 'bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-l-4 border-purple-500' 
+                                : 'text-gray-700 hover:text-purple-700'
+                            }`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <span className="text-lg">{option.icon}</span>
+                              <span>{option.label}</span>
+                              {aiSettings.squadSize === option.value && (
+                                <div className="ml-auto">
+                                  <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Formation Type
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    🧠 Formation Type
                   </label>
-                  <select
-                    value={aiSettings.formationType}
-                    onChange={(e) => setAiSettings(prev => ({ ...prev, formationType: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="diverse">Diverse Skills</option>
-                    <option value="similar">Similar Skills</option>
-                  </select>
+                  <div className="relative" ref={aiFormationTypeDropdownRef}>
+                    <button
+                      onClick={() => setAiFormationTypeDropdownOpen(!aiFormationTypeDropdownOpen)}
+                      className="w-full flex items-center justify-between px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-lg bg-white hover:border-purple-300 cursor-pointer shadow-sm"
+                    >
+                      <span>{getCurrentFormationTypeLabel()}</span>
+                      {aiFormationTypeDropdownOpen ? (
+                        <ChevronUp className="h-5 w-5 text-purple-600 ml-2" />
+                      ) : (
+                        <ChevronDown className="h-5 w-5 text-purple-600 ml-2" />
+                      )}
+                    </button>
+                    
+                    {/* Custom Dropdown Menu */}
+                    {aiFormationTypeDropdownOpen && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-xl z-50 overflow-hidden">
+                        {formationTypeOptions.map((option) => (
+                          <button
+                            key={option.value}
+                            onClick={() => {
+                              setAiSettings(prev => ({ ...prev, formationType: option.value }));
+                              setAiFormationTypeDropdownOpen(false);
+                            }}
+                            className={`w-full px-4 py-3 text-left text-sm font-medium transition-all duration-200 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 ${
+                              aiSettings.formationType === option.value 
+                                ? 'bg-gradient-to-r from-purple-100 to-blue-100 text-purple-700 border-l-4 border-purple-500' 
+                                : 'text-gray-700 hover:text-purple-700'
+                            }`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              <span className="text-lg">{option.icon}</span>
+                              <span>{option.label}</span>
+                              {aiSettings.formationType === option.value && (
+                                <div className="ml-auto">
+                                  <div className="w-2 h-2 bg-purple-600 rounded-full"></div>
+                                </div>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                <div className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-4">
                   <div className="flex items-center">
-                    <Brain className="h-5 w-5 text-blue-600 mr-2" />
-                    <p className="text-sm text-blue-800">
-                      Smart algorithm will create {Math.ceil(availableCandidates.length / aiSettings.squadSize)} squads with {aiSettings.formationType} skills.
-                    </p>
+                    <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center mr-3">
+                      <Brain className="h-5 w-5 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-purple-800">
+                        Smart algorithm will create <span className="text-purple-600 font-bold">{Math.ceil(availableCandidates.length / aiSettings.squadSize)}</span> squads
+                      </p>
+                      <p className="text-xs text-purple-600 mt-1">
+                        with {aiSettings.formationType} skills distribution
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
               
-              <div className="flex space-x-3 mt-6">
+              <div className="flex space-x-4 mt-8">
                 <button
                   onClick={() => setShowAIModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all duration-300"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSmartCreation}
-                  className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-md text-sm font-medium hover:bg-purple-700"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 text-white rounded-xl text-sm font-semibold hover:from-purple-700 hover:to-blue-700 transition-all duration-300 shadow-lg"
                 >
-                  Create Squads
+                  🚀 Create Squads
                 </button>
               </div>
             </div>
@@ -577,53 +777,68 @@ const Squads = () => {
 
       {/* Manual Squad Modal */}
       {showManualModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-10 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-10 mx-auto p-8 border-0 w-full max-w-3xl shadow-2xl rounded-2xl bg-white">
             <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Create Manual Squad</h3>
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center">
+                    <Users2 className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">Create Manual Squad</h3>
+                    <p className="text-sm text-gray-600">Hand-pick your dream team</p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowManualModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-300"
                 >
-                  <span className="sr-only">Close</span>
                   <X className="h-6 w-6" />
                 </button>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Squad Name
+                  <label className="block text-sm font-semibold text-gray-700 mb-3">
+                    🏷️ Squad Name
                   </label>
                   <input
                     type="text"
                     value={manualSquad.name}
                     onChange={(e) => setManualSquad(prev => ({ ...prev, name: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-300 text-lg"
                     placeholder="Enter squad name"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Members ({manualSquad.memberIds.length} selected)
-                  </label>
-                  <div className="max-h-60 overflow-y-auto border border-gray-300 rounded-md">
+                  <div className="flex items-center justify-between mb-3">
+                    <label className="block text-sm font-semibold text-gray-700">
+                      👥 Select Members
+                    </label>
+                    <span className="text-sm font-semibold text-purple-600 bg-purple-100 px-3 py-1 rounded-full">
+                      {manualSquad.memberIds.length} selected
+                    </span>
+                  </div>
+                  <div className="max-h-80 overflow-y-auto border border-gray-200 rounded-xl bg-gray-50">
                     {availableCandidates.map((candidate) => (
                       <div
                         key={candidate.id}
                         onClick={() => toggleMemberSelection(candidate.id)}
-                        className={`p-3 border-b border-gray-200 cursor-pointer hover:bg-gray-50 ${
-                          manualSquad.memberIds.includes(candidate.id) ? 'bg-blue-50 border-blue-200' : ''
+                        className={`p-4 border-b border-gray-100 cursor-pointer transition-all duration-300 hover:bg-white hover:shadow-sm ${
+                          manualSquad.memberIds.includes(candidate.id) 
+                            ? 'bg-gradient-to-r from-purple-50 to-blue-50 border-l-4 border-purple-500' 
+                            : 'hover:border-l-4 hover:border-gray-300'
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-3">
-                            <div className="flex-shrink-0 h-8 w-8">
+                          <div className="flex items-center space-x-4">
+                            <div className="flex-shrink-0 h-12 w-12">
                               {candidate.photo_url ? (
                                 <img
-                                  className="h-8 w-8 rounded-full object-cover"
+                                  className="h-12 w-12 rounded-xl object-cover border-2 border-white shadow-sm"
                                   src={candidate.photo_url}
                                   alt={candidate.name}
                                   onError={(e) => {
@@ -633,7 +848,7 @@ const Squads = () => {
                                 />
                               ) : candidate.selfie_path ? (
                                 <img
-                                  className="h-8 w-8 rounded-full object-cover"
+                                  className="h-12 w-12 rounded-xl object-cover border-2 border-white shadow-sm"
                                   src={`http://localhost:5001/uploads/${candidate.selfie_path}`}
                                   alt={candidate.name}
                                   onError={(e) => {
@@ -642,19 +857,19 @@ const Squads = () => {
                                   }}
                                 />
                               ) : null}
-                              <div className="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center" style={{ display: candidate.photo_url || candidate.selfie_path ? 'none' : 'flex' }}>
-                                <User className="h-4 w-4 text-gray-400" />
+                              <div className="h-12 w-12 rounded-xl bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center border-2 border-white shadow-sm" style={{ display: candidate.photo_url || candidate.selfie_path ? 'none' : 'flex' }}>
+                                <User className="h-6 w-6 text-gray-500" />
                               </div>
                             </div>
                             <div>
-                              <p className="text-sm font-medium text-gray-900">{candidate.name}</p>
-                              <p className="text-xs text-gray-500">{candidate.university} • {candidate.degree}</p>
-                              <p className="text-xs text-gray-500">{candidate.skills}</p>
+                              <p className="text-lg font-semibold text-gray-900">{candidate.name}</p>
+                              <p className="text-sm text-gray-600">{candidate.university} • {candidate.degree}</p>
+                              <p className="text-sm text-purple-600 font-medium">{candidate.skills}</p>
                             </div>
                           </div>
                           {manualSquad.memberIds.includes(candidate.id) && (
-                            <div className="w-4 h-4 bg-blue-600 rounded-full flex items-center justify-center">
-                              <Check className="h-3 w-3 text-white" />
+                            <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full flex items-center justify-center shadow-lg">
+                              <Check className="h-4 w-4 text-white" />
                             </div>
                           )}
                         </div>
@@ -664,18 +879,18 @@ const Squads = () => {
                 </div>
               </div>
               
-              <div className="flex space-x-3 mt-6">
+              <div className="flex space-x-4 mt-8">
                 <button
                   onClick={() => setShowManualModal(false)}
-                  className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
+                  className="flex-1 px-6 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-all duration-300"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleManualCreation}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700"
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl text-sm font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-300 shadow-lg"
                 >
-                  Create Squad
+                  ✨ Create Squad
                 </button>
               </div>
             </div>
@@ -685,29 +900,37 @@ const Squads = () => {
 
       {/* Squad Detail Modal */}
       {showSquadModal && selectedSquad && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-md bg-white">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-8 border-0 w-full max-w-4xl shadow-2xl rounded-2xl bg-white">
             <div className="mt-3">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-medium text-gray-900">{selectedSquad.name}</h3>
+              {/* Header */}
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+                    <Users2 className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900">{selectedSquad.name}</h3>
+                    <p className="text-sm text-gray-600">{selectedSquad.members?.length || 0} team members</p>
+                  </div>
+                </div>
                 <button
                   onClick={() => setShowSquadModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition-all duration-300"
                 >
-                  <span className="sr-only">Close</span>
                   <X className="h-6 w-6" />
                 </button>
               </div>
               
-              <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   {selectedSquad.members?.map((member) => (
-                    <div key={member.id} className="border border-gray-200 rounded-lg p-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="flex-shrink-0 h-12 w-12">
+                    <div key={member.id} className="bg-gradient-to-r from-purple-50 to-blue-50 border border-purple-200 rounded-xl p-6 hover:shadow-lg transition-all duration-300">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-shrink-0 h-16 w-16">
                           {member.photo_url ? (
                             <img
-                              className="h-12 w-12 rounded-full object-cover"
+                              className="h-16 w-16 rounded-xl object-cover border-2 border-white shadow-lg"
                               src={member.photo_url}
                               alt={member.name}
                               onError={(e) => {
@@ -717,7 +940,7 @@ const Squads = () => {
                             />
                           ) : member.selfie_path ? (
                             <img
-                              className="h-12 w-12 rounded-full object-cover"
+                              className="h-16 w-16 rounded-xl object-cover border-2 border-white shadow-lg"
                               src={`http://localhost:5001/uploads/${member.selfie_path}`}
                               alt={member.name}
                               onError={(e) => {
@@ -726,16 +949,27 @@ const Squads = () => {
                               }}
                             />
                           ) : null}
-                          <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center" style={{ display: member.photo_url || member.selfie_path ? 'none' : 'flex' }}>
-                            <User className="h-6 w-6 text-gray-400" />
+                          <div className="h-16 w-16 rounded-xl bg-gradient-to-r from-gray-200 to-gray-300 flex items-center justify-center border-2 border-white shadow-lg" style={{ display: member.photo_url || member.selfie_path ? 'none' : 'flex' }}>
+                            <User className="h-8 w-8 text-gray-500" />
                           </div>
                         </div>
                         <div className="flex-1">
-                          <h4 className="text-sm font-medium text-gray-900">{member.name}</h4>
-                          <p className="text-xs text-gray-500">{member.email}</p>
-                          <p className="text-xs text-gray-500">{member.university}</p>
-                          <p className="text-xs text-gray-500">{member.degree}</p>
-                          <p className="text-xs text-gray-500">{member.skills}</p>
+                          <h4 className="text-lg font-semibold text-gray-900 mb-1">{member.name}</h4>
+                          <p className="text-sm text-purple-600 font-medium mb-2">{member.email}</p>
+                          <div className="space-y-1">
+                            <p className="text-sm text-gray-600 flex items-center">
+                              <Building className="h-4 w-4 mr-2 text-gray-400" />
+                              {member.university}
+                            </p>
+                            <p className="text-sm text-gray-600 flex items-center">
+                              <Code className="h-4 w-4 mr-2 text-gray-400" />
+                              {member.degree}
+                            </p>
+                            <p className="text-sm text-purple-600 font-medium flex items-center">
+                              <Brain className="h-4 w-4 mr-2 text-purple-500" />
+                              {member.skills}
+                            </p>
+                          </div>
                         </div>
                       </div>
                     </div>

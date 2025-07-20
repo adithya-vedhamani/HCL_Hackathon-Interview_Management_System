@@ -9,7 +9,6 @@ import {
   TrendingUp, 
   Activity,
   Building,
-  Clock,
   CheckCircle,
   ArrowRight
 } from 'lucide-react';
@@ -66,7 +65,7 @@ const Dashboard = () => {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="spinner"></div>
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-600"></div>
       </div>
     );
   }
@@ -111,24 +110,37 @@ const Dashboard = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg p-6 border border-purple-200">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-          HCLTech Dashboard
-        </h1>
-        <p className="text-gray-600 mt-2">Supercharging your hackathon management experience</p>
+      <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-xl shadow-xl p-8 text-white">
+        <div className="flex items-center space-x-4">
+          <div className="w-16 h-16 bg-white rounded-xl flex items-center justify-center shadow-lg">
+            <Activity className="h-8 w-8 text-purple-600" />
+          </div>
+          <div>
+            <h1 className="text-4xl font-bold">HCLTech Dashboard</h1>
+            <p className="text-purple-100 text-lg mt-2">Supercharging your hackathon management experience</p>
+          </div>
+        </div>
       </div>
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, index) => (
-          <div key={index} className="bg-white rounded-lg shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+          <div key={index} className="bg-white rounded-xl shadow-lg border border-gray-100 p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
             <div className="flex items-center">
-              <div className={`p-3 rounded-xl ${stat.color} shadow-lg`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center shadow-lg ${stat.color}`}>
                 <stat.icon className="h-6 w-6 text-white" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="text-sm font-semibold text-gray-600">{stat.title}</p>
+                <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
+                <div className="flex items-center mt-1">
+                  <span className={`text-xs font-semibold ${
+                    stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
+                  }`}>
+                    {stat.change}
+                  </span>
+                  <span className="text-xs text-gray-500 ml-1">from last week</span>
+                </div>
               </div>
             </div>
           </div>
@@ -138,62 +150,76 @@ const Dashboard = () => {
       {/* Main Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent Activity */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Recent Activity</h2>
-            <Activity className="h-5 w-5 text-gray-400" />
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center">
+                <Activity className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">Recent Activity</h2>
+            </div>
           </div>
           <div className="space-y-4">
             {recentActivity.slice(0, 5).map((activity, index) => (
-              <div key={index} className="flex items-center space-x-3">
+              <div key={index} className="flex items-center space-x-4 p-3 hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 rounded-xl transition-all duration-300">
                 <div className="flex-shrink-0">
-                  <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                  <div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-blue-500 rounded-full shadow-sm"></div>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-900">
+                  <p className="text-sm font-medium text-gray-900">
                     {activity.type === 'attendance' ? (
                       <span>
-                        <strong>{activity.candidate_name}</strong> checked in
+                        <strong className="text-purple-600">{activity.candidate_name}</strong> checked in
                       </span>
                     ) : (
                       <span>
-                        Squad <strong>{activity.squad_name}</strong> was created
+                        Squad <strong className="text-blue-600">{activity.squad_name}</strong> was created
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs text-gray-500 mt-1">
                     {new Date(activity.timestamp).toLocaleString()}
                   </p>
                 </div>
               </div>
             ))}
             {recentActivity.length === 0 && (
-              <p className="text-gray-500 text-sm">No recent activity</p>
+              <div className="text-center py-8">
+                <Activity className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">No recent activity</p>
+              </div>
             )}
           </div>
         </div>
 
         {/* University Distribution */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">University Distribution</h2>
-            <Building className="h-5 w-5 text-gray-400" />
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center">
+                <Building className="h-5 w-5 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-gray-900">University Distribution</h2>
+            </div>
           </div>
           <div className="max-h-64 overflow-y-auto space-y-3 pr-2">
             {universityStats.map((uni, index) => (
-              <div key={index} className="flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                <span className="text-sm text-gray-900 truncate flex-1">{uni.university}</span>
-                <span className="text-sm font-medium text-purple-600 bg-purple-100 px-2 py-1 rounded-full">
+              <div key={index} className="flex items-center justify-between p-3 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 rounded-xl transition-all duration-300 border border-transparent hover:border-green-200">
+                <span className="text-sm font-medium text-gray-900 truncate flex-1">{uni.university}</span>
+                <span className="text-sm font-semibold text-green-600 bg-gradient-to-r from-green-100 to-emerald-100 px-3 py-1 rounded-full border border-green-200">
                   {uni.count}
                 </span>
               </div>
             ))}
             {universityStats.length === 0 && (
-              <p className="text-gray-500 text-sm">No university data available</p>
+              <div className="text-center py-8">
+                <Building className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm">No university data available</p>
+              </div>
             )}
           </div>
           {universityStats.length > 5 && (
-            <div className="mt-3 pt-3 border-t border-gray-200">
+            <div className="mt-4 pt-4 border-t border-gray-100">
               <p className="text-xs text-gray-500 text-center">
                 Scroll to see all {universityStats.length} universities
               </p>
@@ -204,13 +230,20 @@ const Dashboard = () => {
 
       {/* Skills Distribution */}
       {stats?.skillsDistribution && stats.skillsDistribution.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Top Skills</h2>
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center">
+              <TrendingUp className="h-5 w-5 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Top Skills</h2>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {stats.skillsDistribution.slice(0, 6).map((skill, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <span className="text-sm text-gray-900">{skill.skills}</span>
-                <span className="text-sm font-medium text-blue-600">{skill.count}</span>
+              <div key={index} className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-200 hover:shadow-md transition-all duration-300">
+                <span className="text-sm font-medium text-gray-900">{skill.skills}</span>
+                <span className="text-sm font-semibold text-orange-600 bg-orange-100 px-3 py-1 rounded-full border border-orange-200">
+                  {skill.count}
+                </span>
               </div>
             ))}
           </div>
@@ -219,20 +252,25 @@ const Dashboard = () => {
 
       {/* Attendance Trends */}
       {attendanceTrends.length > 0 && (
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">Attendance Trends (Last 7 Days)</h2>
-          <div className="space-y-3">
+        <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+          <div className="flex items-center space-x-3 mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center">
+              <Calendar className="h-5 w-5 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-gray-900">Attendance Trends (Last 7 Days)</h2>
+          </div>
+          <div className="space-y-4">
             {attendanceTrends.map((trend, index) => (
-              <div key={index} className="flex items-center justify-between">
+              <div key={index} className="flex items-center justify-between p-3 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 rounded-xl transition-all duration-300 border border-transparent hover:border-indigo-200">
                 <div className="flex items-center space-x-3">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-900">
+                  <Calendar className="h-5 w-5 text-indigo-500" />
+                  <span className="text-sm font-medium text-gray-900">
                     {new Date(trend.date).toLocaleDateString()}
                   </span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <CheckCircle className="h-4 w-4 text-green-500" />
-                  <span className="text-sm font-medium text-gray-600">
+                <div className="flex items-center space-x-3">
+                  <CheckCircle className="h-5 w-5 text-green-500" />
+                  <span className="text-sm font-semibold text-indigo-600 bg-indigo-100 px-3 py-1 rounded-full border border-indigo-200">
                     {trend.attendance_count} present
                   </span>
                 </div>
@@ -243,34 +281,54 @@ const Dashboard = () => {
       )}
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
+        <div className="flex items-center space-x-3 mb-6">
+          <div className="w-10 h-10 bg-gradient-to-r from-pink-500 to-rose-500 rounded-xl flex items-center justify-center">
+            <ArrowRight className="h-5 w-5 text-white" />
+          </div>
+          <h2 className="text-xl font-bold text-gray-900">Quick Actions</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <button 
             onClick={() => handleQuickAction('candidates')}
-            className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 hover:border-purple-300 transition-all duration-200 group"
+            className="flex items-center justify-center p-6 border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 hover:border-purple-300 transition-all duration-300 group shadow-sm hover:shadow-lg"
           >
-            <Users className="h-5 w-5 text-purple-600 mr-2 group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-medium text-gray-700">View Candidates</span>
-            <ArrowRight className="h-4 w-4 text-gray-400 ml-2 group-hover:translate-x-1 transition-transform" />
+            <div className="w-12 h-12 bg-gradient-to-r from-purple-500 to-blue-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+              <Users className="h-6 w-6 text-white" />
+            </div>
+            <div className="text-left">
+              <span className="text-sm font-semibold text-gray-700 block">View Candidates</span>
+              <span className="text-xs text-gray-500">Manage participants</span>
+            </div>
+            <ArrowRight className="h-5 w-5 text-gray-400 ml-4 group-hover:translate-x-1 transition-transform" />
           </button>
           
           <button 
             onClick={() => handleQuickAction('squads')}
-            className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 hover:border-purple-300 transition-all duration-200 group"
+            className="flex items-center justify-center p-6 border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 hover:border-blue-300 transition-all duration-300 group shadow-sm hover:shadow-lg"
           >
-            <Users2 className="h-5 w-5 text-blue-600 mr-2 group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-medium text-gray-700">Manage Squads</span>
-            <ArrowRight className="h-4 w-4 text-gray-400 ml-2 group-hover:translate-x-1 transition-transform" />
+            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+              <Users2 className="h-6 w-6 text-white" />
+            </div>
+            <div className="text-left">
+              <span className="text-sm font-semibold text-gray-700 block">Manage Squads</span>
+              <span className="text-xs text-gray-500">Create teams</span>
+            </div>
+            <ArrowRight className="h-5 w-5 text-gray-400 ml-4 group-hover:translate-x-1 transition-transform" />
           </button>
           
           <button 
             onClick={() => handleQuickAction('reports')}
-            className="flex items-center justify-center p-4 border border-gray-300 rounded-lg hover:bg-gradient-to-r hover:from-purple-50 hover:to-blue-50 hover:border-purple-300 transition-all duration-200 group"
+            className="flex items-center justify-center p-6 border border-gray-200 rounded-xl hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50 hover:border-green-300 transition-all duration-300 group shadow-sm hover:shadow-lg"
           >
-            <TrendingUp className="h-5 w-5 text-green-600 mr-2 group-hover:scale-110 transition-transform" />
-            <span className="text-sm font-medium text-gray-700">Generate Reports</span>
-            <ArrowRight className="h-4 w-4 text-gray-400 ml-2 group-hover:translate-x-1 transition-transform" />
+            <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mr-4 group-hover:scale-110 transition-transform">
+              <TrendingUp className="h-6 w-6 text-white" />
+            </div>
+            <div className="text-left">
+              <span className="text-sm font-semibold text-gray-700 block">Generate Reports</span>
+              <span className="text-xs text-gray-500">View analytics</span>
+            </div>
+            <ArrowRight className="h-5 w-5 text-gray-400 ml-4 group-hover:translate-x-1 transition-transform" />
           </button>
         </div>
       </div>
