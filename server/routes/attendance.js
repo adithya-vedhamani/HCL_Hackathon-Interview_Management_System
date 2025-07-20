@@ -136,32 +136,54 @@ router.get('/candidate/:id', (req, res) => {
   });
 });
 
-// Get all attendance records
+// Get all attendance records with pagination
 router.get('/', (req, res) => {
-  const { date } = req.query;
+  const { date, page = 1, limit = 10 } = req.query;
+  const pageNum = parseInt(page);
+  const pageSize = parseInt(limit);
+  const offset = (pageNum - 1) * pageSize;
 
   let query = `
     SELECT a.*, c.name, c.email, c.university, c.degree, c.skills, c.photo_url, c.selfie_path
     FROM attendance a 
     JOIN candidates c ON a.candidate_id = c.id 
   `;
-
+  let countQuery = `
+    SELECT COUNT(*) as total
+    FROM attendance a 
+    JOIN candidates c ON a.candidate_id = c.id 
+  `;
   let params = [];
+  let countParams = [];
 
   if (date) {
     query += ' WHERE DATE(a.check_in_time) = ?';
+    countQuery += ' WHERE DATE(a.check_in_time) = ?';
     params.push(date);
+    countParams.push(date);
   }
 
-  query += ' ORDER BY a.check_in_time DESC';
+  query += ' ORDER BY a.check_in_time DESC LIMIT ? OFFSET ?';
+  params.push(pageSize, offset);
 
-  db.all(query, params, (err, attendance) => {
+  db.get(countQuery, countParams, (err, countResult) => {
     if (err) {
-      console.error('Error fetching attendance:', err);
+      console.error('Error counting attendance:', err);
       return res.status(500).json({ error: 'Database error' });
     }
-
-    res.json(attendance);
+    const total = countResult.total;
+    db.all(query, params, (err, attendance) => {
+      if (err) {
+        console.error('Error fetching attendance:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      res.json({
+        data: attendance,
+        total,
+        page: pageNum,
+        pageSize
+      });
+    });
   });
 });
 

@@ -142,14 +142,45 @@ router.post('/import-excel', upload.single('excelFile'), async (req, res) => {
   }
 });
 
-// Get all candidates
+// Get all candidates with pagination and search
 router.get('/', (req, res) => {
-  db.all('SELECT * FROM candidates ORDER BY created_at DESC', (err, candidates) => {
+  let { page = 1, limit = 10, search = '' } = req.query;
+  page = parseInt(page);
+  limit = parseInt(limit);
+  const offset = (page - 1) * limit;
+
+  let whereClause = '';
+  let params = [];
+  let countParams = [];
+
+  if (search && search.trim()) {
+    const searchTerm = `%${search.trim()}%`;
+    whereClause = 'WHERE name LIKE ? OR email LIKE ? OR university LIKE ? OR degree LIKE ? OR skills LIKE ?';
+    params = [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm];
+    countParams = [searchTerm, searchTerm, searchTerm, searchTerm, searchTerm];
+  }
+
+  const countQuery = `SELECT COUNT(*) as total FROM candidates ${whereClause}`;
+  const dataQuery = `SELECT * FROM candidates ${whereClause} ORDER BY created_at DESC LIMIT ? OFFSET ?`;
+
+  db.get(countQuery, countParams, (err, countResult) => {
     if (err) {
-      console.error('Error fetching candidates:', err);
+      console.error('Error counting candidates:', err);
       return res.status(500).json({ error: 'Database error' });
     }
-    res.json(candidates);
+    const total = countResult.total;
+    db.all(dataQuery, [...params, limit, offset], (err, candidates) => {
+      if (err) {
+        console.error('Error fetching candidates:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      res.json({
+        data: candidates,
+        total,
+        page,
+        pageSize: limit
+      });
+    });
   });
 });
 

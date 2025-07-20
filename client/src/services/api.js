@@ -43,7 +43,7 @@ export const authAPI = {
 
 // Candidates API
 export const candidatesAPI = {
-  getAll: () => api.get('/candidates'),
+  getAll: (params) => api.get('/candidates', { params }),
   getById: (id) => api.get(`/candidates/${id}`),
   getQRCode: (id) => api.get(`/candidates/${id}/qr-code`),
   getQRImage: (id) => api.get(`/candidates/${id}/qr-image`),

@@ -524,32 +524,48 @@ router.get('/available-candidates', (req, res) => {
   });
 });
 
-// Get all squads with members
+// Get all squads with members and pagination
 router.get('/', (req, res) => {
-  db.all(`
-    SELECT s.*, 
-           GROUP_CONCAT(c.name) as member_names,
-           GROUP_CONCAT(c.id) as member_ids,
-           COUNT(sm.candidate_id) as member_count
-    FROM squads s
-    LEFT JOIN squad_members sm ON s.id = sm.squad_id
-    LEFT JOIN candidates c ON sm.candidate_id = c.id
-    GROUP BY s.id
-    ORDER BY s.created_at DESC
-  `, (err, squads) => {
+  let { page = 1, limit = 10 } = req.query;
+  page = parseInt(page);
+  limit = parseInt(limit);
+  const offset = (page - 1) * limit;
+
+  db.get('SELECT COUNT(*) as total FROM squads', (err, countResult) => {
     if (err) {
-      console.error('Error fetching squads:', err);
+      console.error('Error counting squads:', err);
       return res.status(500).json({ error: 'Database error' });
     }
-
-    // Parse member names and IDs
-    const formattedSquads = squads.map(squad => ({
-      ...squad,
-      member_names: squad.member_names ? squad.member_names.split(',') : [],
-      member_ids: squad.member_ids ? squad.member_ids.split(',').map(id => parseInt(id)) : []
-    }));
-
-    res.json(formattedSquads);
+    const total = countResult.total;
+    db.all(`
+      SELECT s.*, 
+             GROUP_CONCAT(c.name) as member_names,
+             GROUP_CONCAT(c.id) as member_ids,
+             COUNT(sm.candidate_id) as member_count
+      FROM squads s
+      LEFT JOIN squad_members sm ON s.id = sm.squad_id
+      LEFT JOIN candidates c ON sm.candidate_id = c.id
+      GROUP BY s.id
+      ORDER BY s.created_at DESC
+      LIMIT ? OFFSET ?
+    `, [limit, offset], (err, squads) => {
+      if (err) {
+        console.error('Error fetching squads:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+      // Parse member names and IDs
+      const formattedSquads = squads.map(squad => ({
+        ...squad,
+        member_names: squad.member_names ? squad.member_names.split(',') : [],
+        member_ids: squad.member_ids ? squad.member_ids.split(',').map(id => parseInt(id)) : []
+      }));
+      res.json({
+        data: formattedSquads,
+        total,
+        page,
+        pageSize: limit
+      });
+    });
   });
 });
 

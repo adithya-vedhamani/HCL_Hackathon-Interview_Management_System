@@ -5,8 +5,11 @@ const API_BASE_URL = 'http://localhost:5001/api';
 // Function to get all candidates
 async function getAllCandidates() {
   try {
-    const response = await axios.get(`${API_BASE_URL}/candidates`);
-    return response.data;
+    const response = await axios.get(`${API_BASE_URL}/candidates?limit=1000`); // Get all candidates
+    // Handle both old and new API response structures
+    const candidates = response.data.data || response.data || [];
+    console.log(`📋 Found ${candidates.length} candidates in database`);
+    return candidates;
   } catch (error) {
     console.error('Error fetching candidates:', error.message);
     return [];
@@ -32,7 +35,7 @@ async function markAllCandidatesPresent() {
   // Get all candidates
   const candidates = await getAllCandidates();
   
-  if (candidates.length === 0) {
+  if (!candidates || candidates.length === 0) {
     console.log('❌ No candidates found in the database');
     return;
   }

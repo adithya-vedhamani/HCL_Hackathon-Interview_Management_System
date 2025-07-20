@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { toast } from 'react-hot-toast';
 import { candidatesAPI } from '../services/api';
 import { 
@@ -19,10 +19,15 @@ import {
 } from 'lucide-react';
 
 const Candidates = () => {
-  const [candidates, setCandidates] = useState([]);
-  const [filteredCandidates, setFilteredCandidates] = useState([]);
+  const [allCandidates, setAllCandidates] = useState([]); // All candidates for client-side search
+  const [candidates, setCandidates] = useState([]); // Filtered candidates to display
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('name'); // name, email, university, degree
+  const [sortOrder, setSortOrder] = useState('asc'); // asc, desc
   const [selectedFile, setSelectedFile] = useState(null);
   const [isUploading, setIsUploading] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
@@ -32,18 +37,29 @@ const Candidates = () => {
   const [qrCodeImage, setQrCodeImage] = useState('');
   const [isGeneratingQR, setIsGeneratingQR] = useState(false);
 
+  // Load all candidates once for client-side search
   useEffect(() => {
-    loadCandidates();
+    loadAllCandidates();
   }, []);
 
+  // Client-side search and pagination
   useEffect(() => {
-    filterCandidates();
-  }, [candidates, searchTerm]);
+    filterAndPaginateCandidates();
+  }, [allCandidates, searchTerm, page, pageSize, sortBy, sortOrder]);
 
-  const loadCandidates = async () => {
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
+  const loadAllCandidates = async () => {
+    setIsLoading(true);
     try {
-      const response = await candidatesAPI.getAll();
-      setCandidates(response.data);
+      // Load all candidates without pagination for client-side search
+      const response = await candidatesAPI.getAll({ limit: 1000 }); // Get all candidates
+      console.log('All candidates loaded:', response.data);
+      setAllCandidates(response.data.data || []);
+      setTotal(response.data.total || 0);
     } catch (error) {
       console.error('Error loading candidates:', error);
       toast.error('Failed to load candidates');
@@ -52,16 +68,48 @@ const Candidates = () => {
     }
   };
 
-  const filterCandidates = () => {
-    const filtered = candidates.filter(candidate =>
-      candidate.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.university?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.degree?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      candidate.skills?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredCandidates(filtered);
+  const filterAndPaginateCandidates = () => {
+    // Client-side search filtering
+    let filtered = allCandidates;
+    
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = allCandidates.filter(candidate => 
+        candidate.name?.toLowerCase().includes(term) ||
+        candidate.email?.toLowerCase().includes(term) ||
+        candidate.university?.toLowerCase().includes(term) ||
+        candidate.degree?.toLowerCase().includes(term) ||
+        candidate.skills?.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue = a[sortBy] || '';
+      let bValue = b[sortBy] || '';
+      
+      // Convert to string for comparison
+      aValue = String(aValue).toLowerCase();
+      bValue = String(bValue).toLowerCase();
+      
+      if (sortOrder === 'asc') {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    });
+
+    // Update total for pagination
+    setTotal(filtered.length);
+
+    // Apply pagination
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginated = filtered.slice(startIndex, endIndex);
+    
+    setCandidates(paginated);
   };
+
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -93,7 +141,11 @@ const Candidates = () => {
       }
       
       setSelectedFile(null);
-      loadCandidates();
+      setPage(1); // Reset to first page to see newly imported candidates
+      // Force reload after a short delay to ensure backend has processed the import
+      setTimeout(() => {
+        loadAllCandidates(); // Reload all candidates to include newly imported ones
+      }, 500);
     } catch (error) {
       console.error('Error importing candidates:', error);
       toast.error(error.response?.data?.error || 'Failed to import candidates');
@@ -110,7 +162,7 @@ const Candidates = () => {
     try {
       await candidatesAPI.delete(id);
       toast.success('Candidate deleted successfully');
-      loadCandidates();
+      loadAllCandidates(); // Reload all candidates to update the list
     } catch (error) {
       console.error('Error deleting candidate:', error);
       toast.error('Failed to delete candidate');
@@ -176,13 +228,48 @@ const Candidates = () => {
     try {
       await candidatesAPI.clearAll();
       toast.success('All data cleared successfully');
-      setCandidates([]);
-      setFilteredCandidates([]);
+      setAllCandidates([]); // Clear all candidates
+      setTotal(0);
+      setPage(1);
+      setPageSize(10);
     } catch (error) {
       console.error('Error clearing data:', error);
       toast.error('Failed to clear data');
     }
   };
+
+  // Pagination controls
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const startItem = (page - 1) * pageSize + 1;
+  const endItem = Math.min(page * pageSize, total);
+
+  const handleSearchClear = () => {
+    setSearchTerm('');
+    setPage(1);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
+  };
+
+  const handlePageSizeChange = (e) => {
+    setPageSize(Number(e.target.value));
+    setPage(1);
+  };
+
+  const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
+  const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
+  const handlePageChange = (newPage) => setPage(newPage);
 
   if (isLoading) {
     return (
@@ -255,25 +342,61 @@ const Candidates = () => {
       )}
 
       {/* Search and Filter */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search candidates..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              />
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-6">
+            {/* Search */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search candidates..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={handleSearchClear}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600">
-              {filteredCandidates.length} of {candidates.length} candidates
-            </span>
+
+            {/* Sort Controls */}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => handleSort(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                >
+                  <option value="name">Name</option>
+                  <option value="email">Email</option>
+                  <option value="university">University</option>
+                  <option value="degree">Degree</option>
+                </select>
+                <button
+                  onClick={() => handleSort(sortBy)}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                >
+                  {sortOrder === 'asc' ? '↑' : '↓'}
+                </button>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Filter className="h-4 w-4 text-gray-400" />
+                <span className="text-sm text-gray-600">
+                  {total} candidates
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -284,17 +407,41 @@ const Candidates = () => {
           <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
-                  Candidate
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Candidate</span>
+                    {sortBy === 'name' && (
+                      <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
-                  University
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6 cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('university')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>University</span>
+                    {sortBy === 'university' && (
+                      <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
                 </th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                   Skills
                 </th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
-                  Contact
+                <th 
+                  className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4 cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('email')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Contact</span>
+                    {sortBy === 'email' && (
+                      <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
                 </th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24 sticky right-0 bg-gray-50">
                   Actions
@@ -302,7 +449,7 @@ const Candidates = () => {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCandidates.map((candidate) => (
+              {candidates && candidates.map((candidate) => (
                 <tr key={candidate.id} className="hover:bg-gray-50 group">
                   <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -401,7 +548,7 @@ const Candidates = () => {
           </table>
         </div>
 
-        {filteredCandidates.length === 0 && (
+        {(!candidates || candidates.length === 0) && (
           <div className="text-center py-12">
             <Users className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">No candidates found</h3>
@@ -411,6 +558,83 @@ const Candidates = () => {
           </div>
         )}
       </div>
+
+      {/* Modern Pagination Controls */}
+      {!isLoading && total > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              {/* Page Info */}
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-700">Rows per page:</span>
+                  <select 
+                    value={pageSize} 
+                    onChange={handlePageSizeChange} 
+                    className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  >
+                    {[5, 10, 20, 50].map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="text-sm text-gray-600">
+                  Showing {startItem} to {endItem} of {total} results
+                </div>
+              </div>
+
+              {/* Pagination Buttons */}
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={handlePrevPage} 
+                  disabled={page === 1} 
+                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                
+                {/* Page Numbers */}
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (page <= 3) {
+                      pageNum = i + 1;
+                    } else if (page >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          pageNum === page 
+                            ? 'bg-blue-600 text-white' 
+                            : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button 
+                  onClick={handleNextPage} 
+                  disabled={page === totalPages} 
+                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Candidate Detail Modal */}
       {showModal && selectedCandidate && (

@@ -13,28 +13,54 @@ import {
   User,
   Building,
   Mail,
-  X
+  X,
+  Search
 } from 'lucide-react';
 
 const Attendance = () => {
-  const [attendance, setAttendance] = useState([]);
+  const [allAttendance, setAllAttendance] = useState([]); // All attendance records
+  const [attendance, setAttendance] = useState([]); // Paginated attendance to display
   const [stats, setStats] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [total, setTotal] = useState(0);
+  
+  // Search and sort state
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('check_in_time');
+  const [sortOrder, setSortOrder] = useState('desc');
 
   useEffect(() => {
     loadAttendanceData();
   }, [selectedDate]);
 
+  // Client-side search, sort, and pagination
+  useEffect(() => {
+    filterAndPaginateAttendance();
+  }, [allAttendance, searchTerm, page, pageSize, sortBy, sortOrder]);
+
+  // Reset page when search changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm]);
+
   const loadAttendanceData = async () => {
     try {
       const [attendanceRes, statsRes] = await Promise.all([
-        attendanceAPI.getAll({ date: selectedDate }),
+        attendanceAPI.getAll({ date: selectedDate, limit: 1000 }), // Get all records for client-side filtering
         attendanceAPI.getStats({ date: selectedDate })
       ]);
-      setAttendance(attendanceRes.data);
+      
+      // Handle paginated response structure
+      const attendanceData = attendanceRes.data.data || attendanceRes.data || [];
+      setAllAttendance(attendanceData);
+      setTotal(attendanceRes.data.total || attendanceData.length);
       setStats(statsRes.data);
     } catch (error) {
       console.error('Error loading attendance data:', error);
@@ -43,6 +69,79 @@ const Attendance = () => {
       setIsLoading(false);
     }
   };
+
+  const filterAndPaginateAttendance = () => {
+    // Client-side search filtering
+    let filtered = allAttendance;
+    
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      filtered = allAttendance.filter(record => 
+        record.name?.toLowerCase().includes(term) ||
+        record.email?.toLowerCase().includes(term) ||
+        record.university?.toLowerCase().includes(term)
+      );
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
+      let aValue = a[sortBy] || '';
+      let bValue = b[sortBy] || '';
+      
+      // Convert to string for comparison
+      aValue = String(aValue).toLowerCase();
+      bValue = String(bValue).toLowerCase();
+      
+      if (sortOrder === 'asc') {
+        return aValue.localeCompare(bValue);
+      } else {
+        return bValue.localeCompare(aValue);
+      }
+    });
+
+    // Update total for pagination
+    setTotal(filtered.length);
+
+    // Apply pagination
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    const paginated = filtered.slice(startIndex, endIndex);
+    
+    setAttendance(paginated);
+  };
+
+  const handleSearchChange = (e) => {
+    setSearchTerm(e.target.value);
+  };
+
+  const handleSearchClear = () => {
+    setSearchTerm('');
+    setPage(1);
+  };
+
+  const handleSort = (field) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+    setPage(1);
+  };
+
+  const handlePageSizeChange = (e) => {
+    setPageSize(Number(e.target.value));
+    setPage(1);
+  };
+
+  const handlePrevPage = () => setPage((p) => Math.max(1, p - 1));
+  const handleNextPage = () => setPage((p) => Math.min(totalPages, p + 1));
+  const handlePageChange = (newPage) => setPage(newPage);
+
+  // Pagination controls
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const startItem = (page - 1) * pageSize + 1;
+  const endItem = Math.min(page * pageSize, total);
 
   const viewRecord = (record) => {
     setSelectedRecord(record);
@@ -118,24 +217,76 @@ const Attendance = () => {
         </div>
       </div>
 
-      {/* Date Filter */}
-      <div className="bg-white rounded-lg shadow-sm p-4">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <Calendar className="h-5 w-5 text-gray-400" />
-            <label className="text-sm font-medium text-gray-700">Date:</label>
-          </div>
-          <input
-            type="date"
-            value={selectedDate}
-            onChange={(e) => setSelectedDate(e.target.value)}
-            className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-          />
-          <div className="flex items-center space-x-2">
-            <Filter className="h-4 w-4 text-gray-400" />
-            <span className="text-sm text-gray-600">
-              {attendance.length} records for {new Date(selectedDate).toLocaleDateString()}
-            </span>
+      {/* Date Filter and Search */}
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div className="p-6">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-6">
+            {/* Date Filter */}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <Calendar className="h-5 w-5 text-gray-400" />
+                <label className="text-sm font-medium text-gray-700">Date:</label>
+              </div>
+              <input
+                type="date"
+                value={selectedDate}
+                onChange={(e) => setSelectedDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            {/* Search */}
+            <div className="flex-1 max-w-md">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Search attendance..."
+                  value={searchTerm}
+                  onChange={handleSearchChange}
+                  className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors"
+                />
+                {searchTerm && (
+                  <button
+                    onClick={handleSearchClear}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Sort Controls */}
+            <div className="flex items-center space-x-4">
+              <div className="flex items-center space-x-2">
+                <span className="text-sm font-medium text-gray-700">Sort by:</span>
+                <select
+                  value={sortBy}
+                  onChange={(e) => handleSort(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                >
+                  <option value="check_in_time">Check In Time</option>
+                  <option value="name">Name</option>
+                  <option value="university">University</option>
+                  <option value="status">Status</option>
+                </select>
+                <button
+                  onClick={() => handleSort(sortBy)}
+                  className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                  title={sortOrder === 'asc' ? 'Ascending' : 'Descending'}
+                >
+                  {sortOrder === 'asc' ? '↑' : '↓'}
+                </button>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Filter className="h-4 w-4 text-gray-400" />
+                <span className="text-sm text-gray-600">
+                  {total} records for {new Date(selectedDate).toLocaleDateString()}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -149,20 +300,52 @@ const Attendance = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Participant
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('name')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Participant</span>
+                    {sortBy === 'name' && (
+                      <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  University
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('university')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>University</span>
+                    {sortBy === 'university' && (
+                      <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Check In
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('check_in_time')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Check In</span>
+                    {sortBy === 'check_in_time' && (
+                      <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Check Out
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                <th 
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors"
+                  onClick={() => handleSort('status')}
+                >
+                  <div className="flex items-center space-x-1">
+                    <span>Status</span>
+                    {sortBy === 'status' && (
+                      <span className="text-blue-600">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -262,6 +445,83 @@ const Attendance = () => {
           </div>
         )}
       </div>
+
+      {/* Modern Pagination Controls */}
+      {!isLoading && total > 0 && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+          <div className="px-6 py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
+              {/* Page Info */}
+              <div className="flex items-center space-x-4">
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-700">Rows per page:</span>
+                  <select 
+                    value={pageSize} 
+                    onChange={handlePageSizeChange} 
+                    className="px-3 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  >
+                    {[5, 10, 20, 50].map(size => (
+                      <option key={size} value={size}>{size}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="text-sm text-gray-600">
+                  Showing {startItem} to {endItem} of {total} results
+                </div>
+              </div>
+
+              {/* Pagination Buttons */}
+              <div className="flex items-center space-x-2">
+                <button 
+                  onClick={handlePrevPage} 
+                  disabled={page === 1} 
+                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Previous
+                </button>
+                
+                {/* Page Numbers */}
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (page <= 3) {
+                      pageNum = i + 1;
+                    } else if (page >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = page - 2 + i;
+                    }
+                    
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => handlePageChange(pageNum)}
+                        className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                          pageNum === page 
+                            ? 'bg-blue-600 text-white' 
+                            : 'text-gray-500 bg-white border border-gray-300 hover:bg-gray-50 hover:text-gray-700'
+                        }`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <button 
+                  onClick={handleNextPage} 
+                  disabled={page === totalPages} 
+                  className="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Attendance Detail Modal */}
       {showModal && selectedRecord && (
