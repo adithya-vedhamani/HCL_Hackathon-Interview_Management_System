@@ -133,14 +133,6 @@ const Dashboard = () => {
               <div className="ml-4">
                 <p className="text-sm font-semibold text-gray-600">{stat.title}</p>
                 <p className="text-3xl font-bold text-gray-900">{stat.value}</p>
-                <div className="flex items-center mt-1">
-                  <span className={`text-xs font-semibold ${
-                    stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {stat.change}
-                  </span>
-                  <span className="text-xs text-gray-500 ml-1">from last week</span>
-                </div>
               </div>
             </div>
           </div>

@@ -373,44 +373,31 @@ const AdminDetails = () => {
         </div>
 
         {/* Enhanced Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-green-500 to-emerald-500 px-6 py-4">
-              <div className="flex items-center">
-                <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <Users className="h-6 w-6 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-semibold text-green-100">Total Admins</p>
-                  <p className="text-3xl font-bold text-white">{admins.length}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-4">
-              <div className="flex items-center">
-                <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <Shield className="h-6 w-6 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-semibold text-blue-100">Active Sessions</p>
-                  <p className="text-3xl font-bold text-white">1</p>
+        <div className="flex justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl">
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-green-500 to-emerald-500 px-6 py-4">
+                <div className="flex items-center">
+                  <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-semibold text-green-100">Total Admins</p>
+                    <p className="text-3xl font-bold text-white">{admins.length}</p>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-purple-500 to-pink-500 px-6 py-4">
-              <div className="flex items-center">
-                <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
-                  <Zap className="h-6 w-6 text-white" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-semibold text-purple-100">Last Updated</p>
-                  <p className="text-3xl font-bold text-white">
-                    {admins.length > 0 ? new Date(admins[0].created_at).toLocaleDateString() : 'N/A'}
-                  </p>
+            <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+              <div className="bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-4">
+                <div className="flex items-center">
+                  <div className="p-2 bg-white/20 backdrop-blur-sm rounded-xl">
+                    <Shield className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="ml-4">
+                    <p className="text-sm font-semibold text-blue-100">Active Sessions</p>
+                    <p className="text-3xl font-bold text-white">1</p>
+                  </div>
                 </div>
               </div>
             </div>

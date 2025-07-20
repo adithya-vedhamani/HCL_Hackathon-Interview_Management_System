@@ -96,9 +96,13 @@ export const adminAPI = {
 export const reportsAPI = {
   getComprehensive: () => api.get('/reports/comprehensive'),
   downloadExcel: () => api.get('/reports/download-excel', { responseType: 'blob' }),
+  downloadDetailedExcel: (data) => api.post('/reports/download-detailed-excel', data, { responseType: 'blob' }),
+
   getAttendance: (params) => api.get('/reports/attendance', { params }),
   getSquadPerformance: () => api.get('/reports/squad-performance'),
-
+  getCandidates: () => api.get('/reports/candidates'),
+  getSquads: () => api.get('/reports/squads'),
+  getAttendanceDetails: () => api.get('/reports/attendance-details'),
 };
 
 // Utility functions
