@@ -309,27 +309,6 @@ router.get('/squad-performance', (req, res) => {
   });
 });
 
-// Get university performance report
-router.get('/university-performance', (req, res) => {
-  db.all(`
-    SELECT 
-      c.university,
-      COUNT(DISTINCT c.id) as total_candidates,
-      COUNT(a.id) as total_attendance,
-      AVG(CAST(a.id AS FLOAT)) as avg_attendance_per_candidate
-    FROM candidates c
-    LEFT JOIN attendance a ON c.id = a.candidate_id
-    WHERE c.university IS NOT NULL AND c.university != ''
-    GROUP BY c.university
-    ORDER BY total_attendance DESC
-  `, (err, universityPerformance) => {
-    if (err) {
-      console.error('Error generating university performance report:', err);
-      return res.status(500).json({ error: 'Database error' });
-    }
 
-    res.json(universityPerformance);
-  });
-});
 
 module.exports = router; 

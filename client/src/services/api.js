@@ -94,7 +94,7 @@ export const reportsAPI = {
   downloadExcel: () => api.get('/reports/download-excel', { responseType: 'blob' }),
   getAttendance: (params) => api.get('/reports/attendance', { params }),
   getSquadPerformance: () => api.get('/reports/squad-performance'),
-  getUniversityPerformance: () => api.get('/reports/university-performance'),
+
 };
 
 // Utility functions

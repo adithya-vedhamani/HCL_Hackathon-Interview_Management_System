@@ -8,7 +8,6 @@ import {
   Users, 
   Users2, 
   Calendar,
-  Building,
   Code,
   FileText,
   Eye
@@ -18,7 +17,7 @@ const Reports = () => {
   const [comprehensiveReport, setComprehensiveReport] = useState(null);
   const [attendanceReport, setAttendanceReport] = useState([]);
   const [squadPerformance, setSquadPerformance] = useState([]);
-  const [universityPerformance, setUniversityPerformance] = useState([]);
+
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
   const [selectedReport, setSelectedReport] = useState(null);
@@ -30,17 +29,15 @@ const Reports = () => {
 
   const loadReports = async () => {
     try {
-      const [comprehensiveRes, attendanceRes, squadRes, universityRes] = await Promise.all([
+      const [comprehensiveRes, attendanceRes, squadRes] = await Promise.all([
         reportsAPI.getComprehensive(),
         reportsAPI.getAttendance(),
-        reportsAPI.getSquadPerformance(),
-        reportsAPI.getUniversityPerformance()
+        reportsAPI.getSquadPerformance()
       ]);
       
       setComprehensiveReport(comprehensiveRes.data);
       setAttendanceReport(attendanceRes.data);
       setSquadPerformance(squadRes.data);
-      setUniversityPerformance(universityRes.data);
     } catch (error) {
       console.error('Error loading reports:', error);
       toast.error('Failed to load reports');
@@ -200,60 +197,7 @@ const Reports = () => {
         </div>
       </div>
 
-      {/* University Performance */}
-      <div className="bg-white rounded-lg shadow-sm p-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">University Performance</h2>
-          <Building className="h-5 w-5 text-gray-400" />
-        </div>
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  University
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Candidates
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Attendance
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Avg Attendance/Candidate
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {universityPerformance.map((uni, index) => (
-                <tr key={index} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <Building className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm font-medium text-gray-900">{uni.university}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {uni.total_candidates}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {uni.total_attendance}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {uni.avg_attendance_per_candidate ? uni.avg_attendance_per_candidate.toFixed(2) : '0'}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {universityPerformance.length === 0 && (
-          <div className="text-center py-8">
-            <Building className="mx-auto h-8 w-8 text-gray-400" />
-            <p className="text-gray-500 text-sm mt-2">No university data available</p>
-          </div>
-        )}
-      </div>
+
 
       {/* Skills Distribution */}
       {comprehensiveReport?.skillsDistribution && comprehensiveReport.skillsDistribution.length > 0 && (
