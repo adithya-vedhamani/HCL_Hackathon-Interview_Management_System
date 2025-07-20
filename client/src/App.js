@@ -21,12 +21,24 @@ function App() {
     <Router>
       <div className="App">
         <Toaster 
-          position="top-right"
+          position="top-center"
           toastOptions={{
             duration: 4000,
             style: {
-              background: '#363636',
+              background: 'linear-gradient(135deg, #7c3aed, #2563eb)',
               color: '#fff',
+              borderRadius: '12px',
+              boxShadow: '0 10px 25px rgba(124, 58, 237, 0.3)',
+            },
+            success: {
+              style: {
+                background: 'linear-gradient(135deg, #059669, #10b981)',
+              },
+            },
+            error: {
+              style: {
+                background: 'linear-gradient(135deg, #dc2626, #ef4444)',
+              },
             },
           }}
         />

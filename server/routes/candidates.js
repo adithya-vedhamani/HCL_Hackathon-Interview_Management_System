@@ -71,8 +71,16 @@ router.post('/import-excel', upload.single('excelFile'), async (req, res) => {
     }
 
     const importedCandidates = [];
+    const validCandidates = data.filter(row => {
+      const candidate = {
+        name: row.Name || row.name,
+        email: row.Email || row.email
+      };
+      return candidate.name && candidate.email;
+    });
 
-    for (const row of data) {
+    // Process candidates sequentially to ensure proper counting
+    for (const row of validCandidates) {
       const candidate = {
         name: row.Name || row.name,
         age: parseInt(row.Age || row.age) || null,
@@ -85,38 +93,38 @@ router.post('/import-excel', upload.single('excelFile'), async (req, res) => {
         photo_url: row.Photo || row.photo || row.photo_url || null
       };
 
-      if (!candidate.name || !candidate.email) {
-        continue; // Skip invalid entries
-      }
-
       // Check if candidate already exists
-      db.get('SELECT id FROM candidates WHERE email = ?', [candidate.email], async (err, existing) => {
-        if (err) {
-          console.error('Database error:', err);
-          return;
-        }
+      const existing = await new Promise((resolve, reject) => {
+        db.get('SELECT id FROM candidates WHERE email = ?', [candidate.email], (err, result) => {
+          if (err) reject(err);
+          else resolve(result);
+        });
+      });
 
-        if (!existing) {
-          // Insert new candidate
+      if (!existing) {
+        // Insert new candidate
+        const insertResult = await new Promise((resolve, reject) => {
           db.run(`
             INSERT INTO candidates (name, age, degree, university, batch, phone, email, skills, photo_url)
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
           `, [candidate.name, candidate.age, candidate.degree, candidate.university, 
                candidate.batch, candidate.phone, candidate.email, candidate.skills, candidate.photo_url], function(err) {
-            if (err) {
-              console.error('Error inserting candidate:', err);
-              return;
-            }
-
-            // Generate QR code for new candidate
-            generateQRCode(this.lastID).then(qrCode => {
-              db.run('UPDATE candidates SET qr_code = ? WHERE id = ?', [qrCode, this.lastID]);
-            });
-
-            importedCandidates.push({ ...candidate, id: this.lastID });
+            if (err) reject(err);
+            else resolve(this.lastID);
           });
-        }
-      });
+        });
+
+        // Generate QR code for new candidate
+        const qrCode = await generateQRCode(insertResult);
+        await new Promise((resolve, reject) => {
+          db.run('UPDATE candidates SET qr_code = ? WHERE id = ?', [qrCode, insertResult], (err) => {
+            if (err) reject(err);
+            else resolve();
+          });
+        });
+
+        importedCandidates.push({ ...candidate, id: insertResult });
+      }
     }
 
     // Clean up uploaded file

@@ -57,6 +57,7 @@ const Candidates = () => {
       candidate.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.university?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      candidate.degree?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       candidate.skills?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredCandidates(filtered);
@@ -83,7 +84,14 @@ const Candidates = () => {
     setIsUploading(true);
     try {
       const response = await candidatesAPI.importExcel(selectedFile);
-      toast.success(`Successfully imported ${response.data.importedCount} candidates`);
+      console.log('Import response:', response.data);
+      
+      if (response.data.importedCount > 0) {
+        toast.success(`Successfully imported ${response.data.importedCount} candidates!`);
+      } else {
+        toast.success('File processed successfully. No new candidates were imported (they may already exist).');
+      }
+      
       setSelectedFile(null);
       loadCandidates();
     } catch (error) {
@@ -273,30 +281,30 @@ const Candidates = () => {
       {/* Candidates List */}
       <div className="bg-white rounded-lg shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
+          <table className="w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                   Candidate
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/6">
                   University
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                   Skills
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider w-1/4">
                   Contact
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider w-24 sticky right-0 bg-gray-50">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredCandidates.map((candidate) => (
-                <tr key={candidate.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
+                <tr key={candidate.id} className="hover:bg-gray-50 group">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <div className="flex-shrink-0 h-10 w-10">
                         {candidate.photo_url ? (
@@ -334,53 +342,53 @@ const Candidates = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center">
                       <Building className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900">{candidate.university}</span>
+                      <span className="text-sm text-gray-900 truncate">{candidate.university}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-4 py-4">
                     <div className="flex items-center">
                       <Code className="h-4 w-4 text-gray-400 mr-2" />
-                      <span className="text-sm text-gray-900 truncate max-w-xs">
+                      <span className="text-sm text-gray-900 truncate">
                         {candidate.skills}
                       </span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4 whitespace-nowrap">
                     <div className="space-y-1">
                       <div className="flex items-center text-sm text-gray-900">
                         <Mail className="h-4 w-4 text-gray-400 mr-2" />
-                        {candidate.email}
+                        <span className="truncate">{candidate.email}</span>
                       </div>
                       {candidate.phone && (
                         <div className="flex items-center text-sm text-gray-500">
                           <Phone className="h-4 w-4 text-gray-400 mr-2" />
-                          {candidate.phone}
+                          <span className="truncate">{candidate.phone}</span>
                         </div>
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <div className="flex items-center justify-end space-x-2">
+                  <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium sticky right-0 bg-white group-hover:bg-gray-50 shadow-[-4px_0_6px_-1px_rgba(0,0,0,0.1)] transition-colors">
+                    <div className="flex items-center justify-end space-x-1">
                       <button
                         onClick={() => viewCandidate(candidate)}
-                        className="text-blue-600 hover:text-blue-900"
+                        className="p-1 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors"
                         title="View Details"
                       >
                         <Eye className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => viewQRCode(candidate)}
-                        className="text-green-600 hover:text-green-900"
+                        className="p-1 text-green-600 hover:text-green-900 hover:bg-green-50 rounded transition-colors"
                         title="View QR Code"
                       >
                         <QrCode className="h-4 w-4" />
                       </button>
                       <button
                         onClick={() => handleDelete(candidate.id)}
-                        className="text-red-600 hover:text-red-900"
+                        className="p-1 text-red-600 hover:text-red-900 hover:bg-red-50 rounded transition-colors"
                         title="Delete"
                       >
                         <Trash2 className="h-4 w-4" />
