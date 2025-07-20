@@ -11,6 +11,7 @@ import QRScanner from './pages/QRScanner';
 import Squads from './pages/Squads';
 import Reports from './pages/Reports';
 import Attendance from './pages/Attendance';
+import AdminDetails from './pages/AdminDetails';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -85,6 +86,14 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <Reports />
+              </Layout>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/admin-details" element={
+            <ProtectedRoute>
+              <Layout>
+                <AdminDetails />
               </Layout>
             </ProtectedRoute>
           } />

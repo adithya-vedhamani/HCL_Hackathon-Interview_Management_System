@@ -86,6 +86,10 @@ export const adminAPI = {
   getRecentActivity: () => api.get('/admin/recent-activity'),
   getUniversityStats: () => api.get('/admin/university-stats'),
   getAttendanceTrends: (params) => api.get('/admin/attendance-trends', { params }),
+  getAll: () => api.get('/admin/all'),
+  update: (id, data) => api.put(`/admin/${id}`, data),
+  delete: (id) => api.delete(`/admin/${id}`),
+  create: (data) => api.post('/admin/create', data),
 };
 
 // Reports API

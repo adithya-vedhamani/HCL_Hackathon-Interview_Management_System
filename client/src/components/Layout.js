@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { 
   Home, 
   Users, 
-  QrCode, 
   Users2, 
   BarChart3, 
   LogOut,
@@ -11,8 +10,8 @@ import {
   X,
   User,
   Calendar,
-  TrendingUp,
-  Zap
+  Zap,
+  Shield
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -26,6 +25,7 @@ const Layout = ({ children }) => {
     { name: 'Attendance', href: '/attendance', icon: Calendar },
     { name: 'Squads', href: '/squads', icon: Users2 },
     { name: 'Reports', href: '/reports', icon: BarChart3 },
+    { name: 'Admin Details', href: '/admin-details', icon: Shield },
   ];
 
   const handleLogout = () => {

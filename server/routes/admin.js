@@ -230,6 +230,87 @@ router.get('/attendance-trends', authenticateToken, (req, res) => {
   });
 });
 
+// Get all admins
+router.get('/all', authenticateToken, (req, res) => {
+  db.all('SELECT id, username, password_hash, created_at FROM admins ORDER BY created_at DESC', (err, admins) => {
+    if (err) {
+      console.error('Error getting admins:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+    res.json(admins);
+  });
+});
+
+// Update admin
+router.put('/:id', authenticateToken, async (req, res) => {
+  const { id } = req.params;
+  const { username, password } = req.body;
+
+  if (!username) {
+    return res.status(400).json({ error: 'Username is required' });
+  }
+
+  try {
+    let updateQuery = 'UPDATE admins SET username = ?';
+    let params = [username];
+
+    if (password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      updateQuery += ', password_hash = ?';
+      params.push(hashedPassword);
+    }
+
+    updateQuery += ' WHERE id = ?';
+    params.push(id);
+
+    db.run(updateQuery, params, function(err) {
+      if (err) {
+        console.error('Error updating admin:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Admin not found' });
+      }
+
+      res.json({ message: 'Admin updated successfully' });
+    });
+  } catch (error) {
+    console.error('Error hashing password:', error);
+    res.status(500).json({ error: 'Error updating admin' });
+  }
+});
+
+// Delete admin
+router.delete('/:id', authenticateToken, (req, res) => {
+  const { id } = req.params;
+
+  // Prevent deleting the last admin
+  db.get('SELECT COUNT(*) as count FROM admins', (err, result) => {
+    if (err) {
+      console.error('Error checking admin count:', err);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (result.count <= 1) {
+      return res.status(400).json({ error: 'Cannot delete the last admin' });
+    }
+
+    db.run('DELETE FROM admins WHERE id = ?', [id], function(err) {
+      if (err) {
+        console.error('Error deleting admin:', err);
+        return res.status(500).json({ error: 'Database error' });
+      }
+
+      if (this.changes === 0) {
+        return res.status(404).json({ error: 'Admin not found' });
+      }
+
+      res.json({ message: 'Admin deleted successfully' });
+    });
+  });
+});
+
 // Verify token
 router.get('/verify', authenticateToken, (req, res) => {
   res.json({
