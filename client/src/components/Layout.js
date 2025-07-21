@@ -11,7 +11,8 @@ import {
   User,
   Calendar,
   Zap,
-  Shield
+  Shield,
+  QrCode
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -25,6 +26,7 @@ const Layout = ({ children }) => {
     { name: 'Attendance', href: '/attendance', icon: Calendar },
     { name: 'Squads', href: '/squads', icon: Users2 },
     { name: 'Reports', href: '/reports', icon: BarChart3 },
+    { name: 'QR Downloader', href: '/qr-downloader', icon: QrCode },
     { name: 'Admin Details', href: '/admin-details', icon: Shield },
   ];
 

@@ -12,6 +12,7 @@ import Squads from './pages/Squads';
 import Reports from './pages/Reports';
 import Attendance from './pages/Attendance';
 import AdminDetails from './pages/AdminDetails';
+import QRDownloader from './pages/QRDownloader';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -94,6 +95,14 @@ function App() {
             <ProtectedRoute>
               <Layout>
                 <AdminDetails />
+              </Layout>
+            </ProtectedRoute>
+          } />
+
+          <Route path="/qr-downloader" element={
+            <ProtectedRoute>
+              <Layout>
+                <QRDownloader />
               </Layout>
             </ProtectedRoute>
           } />
