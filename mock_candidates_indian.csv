@@ -1,0 +1,21 @@
+Name,Email,Phone,University,Degree,Skills,Experience,Photo
+Amit Sharma,amitsharma@gmail.com,+91-90000000,IIT Bombay,Bachelor of Technology,"Python, Machine Learning, Data Science",3 years,https://randomuser.me/api/portraits/men/1.jpg
+Rahul Verma,rahul.verma456@gmail.com,+91-90000001,NIT Trichy,Master of Technology,"JavaScript, React, Node.js",2 years,https://randomuser.me/api/portraits/men/2.jpg
+Siddharth Singh,sid.singh789@gmail.com,+91-90000002,IIT Delhi,Bachelor of Engineering,"Java, Spring Boot, Microservices",4 years,https://randomuser.me/api/portraits/men/3.jpg
+Rohit Kumar,rohit.kumar321@gmail.com,+91-90000003,NIT Surathkal,Master of Science,"C++, Game Development, Graphics",5 years,https://randomuser.me/api/portraits/men/4.jpg
+Vikram Joshi,vikram.joshi654@gmail.com,+91-90000004,IIT Madras,Bachelor of Technology,"Python, Flask, Django",1 year,https://randomuser.me/api/portraits/men/5.jpg
+Ankit Patel,ankit.patel987@gmail.com,+91-90000005,NIT Warangal,Bachelor of Engineering,"JavaScript, Vue.js, Frontend",2 years,https://randomuser.me/api/portraits/men/1.jpg
+Karan Mehta,karan.mehta246@gmail.com,+91-90000006,IIT Kanpur,Master of Technology,"Python, AI, Computer Vision",3 years,https://randomuser.me/api/portraits/men/2.jpg
+Saurabh Gupta,saurabh.gupta135@gmail.com,+91-90000007,NIT Calicut,Bachelor of Technology,"JavaScript, Angular, TypeScript",2 years,https://randomuser.me/api/portraits/men/3.jpg
+Manish Yadav,manish.yadav864@gmail.com,+91-90000008,IIT Kharagpur,Master of Science,"Python, TensorFlow, Deep Learning",4 years,https://randomuser.me/api/portraits/men/4.jpg
+Deepak Saini,deepak.saini753@gmail.com,+91-90000009,NIT Rourkela,Bachelor of Engineering,"Java, Kotlin, Android",5 years,https://randomuser.me/api/portraits/men/5.jpg
+Priya Nair,priya.nair159@gmail.com,+91-90000010,IIT Roorkee,Bachelor of Technology,"Python, Machine Learning, Data Science",3 years,https://randomuser.me/api/portraits/women/1.jpg
+Sneha Reddy,sneha.reddy852@gmail.com,+91-90000011,NIT Durgapur,Master of Technology,"JavaScript, React, Node.js",2 years,https://randomuser.me/api/portraits/women/2.jpg
+Anjali Das,anjali.das951@gmail.com,+91-90000012,IIT Guwahati,Bachelor of Engineering,"Java, Spring Boot, Microservices",4 years,https://randomuser.me/api/portraits/women/3.jpg
+Pooja Sharma,pooja.sharma753@gmail.com,+91-90000013,NIT Allahabad,Master of Science,"C++, Game Development, Graphics",5 years,https://randomuser.me/api/portraits/women/4.jpg
+Ritika Singh,ritika.singh357@gmail.com,+91-90000014,IIT Hyderabad,Bachelor of Technology,"Python, Flask, Django",1 year,https://randomuser.me/api/portraits/women/5.jpg
+Neha Agarwal,neha.agarwal258@gmail.com,+91-90000015,NIT Jaipur,Bachelor of Engineering,"JavaScript, Vue.js, Frontend",2 years,https://randomuser.me/api/portraits/women/1.jpg
+Shreya Gupta,shreya.gupta654@gmail.com,+91-90000016,IIT Bombay,Master of Technology,"Python, AI, Computer Vision",3 years,https://randomuser.me/api/portraits/women/2.jpg
+Isha Jain,isha.jain357@gmail.com,+91-90000017,NIT Trichy,Bachelor of Technology,"JavaScript, Angular, TypeScript",2 years,https://randomuser.me/api/portraits/women/3.jpg
+Swati Mishra,swati.mishra159@gmail.com,+91-90000018,IIT Delhi,Master of Science,"Python, TensorFlow, Deep Learning",4 years,https://randomuser.me/api/portraits/women/4.jpg
+Divya Menon,divya.menon951@gmail.com,+91-90000019,NIT Surathkal,Bachelor of Engineering,"Java, Kotlin, Android",5 years,https://randomuser.me/api/portraits/women/5.jpg 
