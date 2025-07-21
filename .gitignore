@@ -34,9 +34,7 @@ server/uploads/
 *.jpeg
 *.gif
 *.pdf
-*.xlsx
-*.xls
-*.csv
+
 
 # Logs
 logs
@@ -98,7 +96,6 @@ jspm_packages/
 
 # Gatsby files
 .cache/
-public
 
 # Storybook build outputs
 .out
